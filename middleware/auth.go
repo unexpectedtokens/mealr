@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/unexpectedtokens/mealr/helpers"
+	"github.com/unexpectedtokens/mealr/auth"
 )
 
 //AuthorizeMiddleware checks for a valid jwt and passes the id unto the view
@@ -16,7 +16,7 @@ func AuthorizeMiddleware(fn func(http.ResponseWriter, *http.Request, interface{}
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}	
-		token := helpers.ParseToken(r.Header["Authorization"][0])
+		token := auth.ParseToken(r.Header["Authorization"][0])
 		if claims, ok := token.Claims.(jwt.MapClaims); ok{
 
 			var tm time.Time
@@ -27,7 +27,7 @@ func AuthorizeMiddleware(fn func(http.ResponseWriter, *http.Request, interface{}
         		v, _ := exp.Int64()
         		tm = time.Unix(v, 0)
     		}
-			if helpers.CheckIfNotExpired(tm){
+			if auth.CheckIfNotExpired(tm){
 				fn(w,r, claims["uid"])
 			}else{
 				http.Error(w, "unauthorized", http.StatusUnauthorized)

@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -15,9 +14,10 @@ func handleRequests(){
 	http.HandleFunc("/auth/create/", middleware.LoggingMiddleware(routes.RegisterView))
 	http.HandleFunc("/auth/obtain/", middleware.LoggingMiddleware(routes.LoginView))
 	http.HandleFunc("/auth/update/", middleware.LoggingMiddleware(middleware.AuthorizeMiddleware(routes.ChangeUserView)))
+	http.HandleFunc("/auth/refresh/", middleware.LoggingMiddleware(middleware.AuthorizeMiddleware(routes.RefreshView)))
 	http.HandleFunc("/api/recipe/", middleware.LoggingMiddleware(routes.GeneratePlanView))
 	fmt.Println("Setting op listening on port 8080")
-	log.Fatal(http.ListenAndServe("localhost:8080", nil))
+	panic(http.ListenAndServe("localhost:8080", nil))
 }
 
 func recipesExist() bool {

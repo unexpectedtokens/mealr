@@ -15,11 +15,12 @@ type Profile struct {
 
 
 //CreateProfile is a function to create a profile
-func CreateProfile(userID int64) {
-	if userID != 0{
-		_, err := db.DBCon.Query("INSERT INTO profiles (user_id) VALUES ($1);", userID)
+func (p *Profile) CreateProfile() {
+	if p.UserID != 0{
+		_, err := db.DBCon.Query("INSERT INTO profiles (user_id) VALUES ($1) RETURNING id;", p.UserID)
 		if err!=nil{
 			panic(err)
 		}
 	}
 }
+

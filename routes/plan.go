@@ -5,19 +5,33 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sync"
 	"time"
 )
 
-//Recipes is a slice to hold recipes
-type Recipes []Recipe
+//recipes is a slice to hold recipes
+type recipes []Recipe
 
 
-//WeekPlan is the blueprint for the json string to be sent to the user on week plan request.
-type WeekPlan map[string]DayPlan
-// type Day struct {
-// 	breakfast Recipe 
+//weekPlan is the blueprint for the json string to be sent to the user on week plan request.
+type weekPlan struct{
+	plan map[string]DayPlan
+	keys []string
+}
 
-// }
+//set is a method to keep track of the order in which the plan needs to be represented. 
+//This is because maps dont keep track of insertion order.
+func (w *weekPlan) set(key string, item DayPlan){
+	w.plan[key] = item
+	w.keys = append(w.keys, key)
+}
+
+//init initializes the properties on a weekplan
+func (w *weekPlan) init(){
+	w.keys = []string{}
+	w.plan = map[string]DayPlan{}
+}
+
 
 //DayPlan is to be a part of the weekplan
 type DayPlan struct{
@@ -25,6 +39,7 @@ type DayPlan struct{
 	Lunch Recipe
 	Dinner Recipe
 	Snacks []Recipe
+	day time.Time
 }
 
  
@@ -73,23 +88,23 @@ func (r Response) String() string{
 
 
 var qs []string = []string{"Breakfast", "Lunch", "Dinner", "Snack"}
-var recipes Recipes
+var recipesList recipes
 
 //PopulateRecipes gets recipes from the api and stores them in memory for use of the api
 func PopulateRecipes(ex bool) {
-	defer recover()
+	// defer recover()
 	if ex{
 		file, err := ioutil.ReadFile("recipes.json")
 		if err !=nil{
 		panic(err)
 		}
-		json.Unmarshal(file, &recipes)
+		json.Unmarshal(file, &recipesList)
 	} else{
 		var HTTPGetter = &http.Client{
 			Timeout: time.Second * 10,
 		}
 		for _,x := range qs{
-//			fmt.Println(x)
+//		fmt.Println(x)
 //		fmt.Printf("https://api.edamam.com/search?q=%s&app_id=38a726b5&app_key=a3a08b57d316dbf069c28a3366f881ca&health=vegan&health=vegetarian&mealType=%s\n", x, x)
 		resp, err := HTTPGetter.Get(fmt.Sprintf("https://api.edamam.com/search?q=%s&from=0&to=30&app_id=38a726b5&app_key=a3a08b57d316dbf069c28a3366f881ca&health=vegan&health=vegetarian", x))
 		if err != nil {
@@ -105,10 +120,10 @@ func PopulateRecipes(ex bool) {
 
 		for _, f := range response.Hits{
 			f.Recipe.TypeOf = x
-			recipes = append(recipes, f.Recipe)
+			recipesList = append(recipesList, f.Recipe)
 		}
 	}
-	fileData, err := json.MarshalIndent(recipes, "", "")
+	fileData, err := json.MarshalIndent(recipesList, "", "")
 	if err != nil{
 		panic(err)
 	}
@@ -157,10 +172,12 @@ func PopulateRecipes(ex bool) {
 	}
 }
 
-func returnRecipe(exclude *[]string, typeOf string, calories float64)Recipe{
+var excludeMutex sync.Mutex
+func returnRecipe(exclude *[]string, typeOf string, calories float64, c chan Recipe){
+	//fmt.Println("calories from returnrecipe", calories)
 	var recipe Recipe
- 	for _, x:=range recipes{
-		if x.TypeOf == typeOf && !(recipe.Calories > calories + 200 || recipe.Calories < calories - 200){
+ 	for _, x:=range recipesList{
+		if x.TypeOf == typeOf{// && !(recipe.Calories > calories + 200.0 || recipe.Calories < calories - 200.0){
 			unique := true
 			for _, i:= range *exclude{
 				unique = i != x.Label && unique
@@ -176,41 +193,68 @@ func returnRecipe(exclude *[]string, typeOf string, calories float64)Recipe{
 	
 	}
 	recipe.Calories = recipe.Calories / recipe.Yield
-	fmt.Println(recipe.Calories)
-	// if recipe.Calories > calories + 200 || recipe.Calories < calories - 200{
-	// 	return returnRecipe(exclude, typeOf, calories)
-
-	// }
+	//fmt.Println("recipe.calories: ",recipe.Label)
+	if recipe.Label == ""{
+		returnRecipe(exclude, typeOf, calories, c)
+		return
+	}
+	excludeMutex.Lock()
 	*exclude = append(*exclude, recipe.Label)
-	return recipe	
+	excludeMutex.Unlock()
+	c <- recipe
 }
 
-func generateDayPlan(exclude *[]string, calories float64) DayPlan{
+func generateDayPlan(exclude *[]string, calories float64, day time.Time) DayPlan{
+
+	//fmt.Println("calories from generatedayplan",calories)
 	var dayPlan DayPlan
-	dayPlan.Breakfast = returnRecipe(exclude, "Breakfast", calories / 3)
-	dayPlan.Lunch = returnRecipe(exclude, "Lunch", calories / 3)
-	dayPlan.Dinner = returnRecipe(exclude, "Dinner", calories / 3)
-	fmt.Println("Total daily calories", dayPlan.Breakfast.Calories + dayPlan.Lunch.Calories + dayPlan.Dinner.Calories)
+	dayPlan.day = day
+	breakfastChannel := make(chan Recipe)
+	lunchChannel := make(chan Recipe)
+	dinnerChannel := make(chan Recipe)
+	go returnRecipe(exclude, "Breakfast", calories / 3.0, breakfastChannel)
+	go returnRecipe(exclude, "Lunch", calories / 3.0, lunchChannel)
+	go returnRecipe(exclude, "Dinner", calories / 3.0, dinnerChannel)
+	dayPlan.Breakfast = <- breakfastChannel
+	dayPlan.Lunch = <-lunchChannel
+	dayPlan.Dinner = <- dinnerChannel
+	// dayPlan.Lunch = returnRecipe(exclude, "Lunch", calories / 3.0)
+	// dayPlan.Dinner = returnRecipe(exclude, "Dinner", calories / 3.0)
+	//fmt.Println("Total daily calories", dayPlan.Breakfast.Calories + dayPlan.Lunch.Calories + dayPlan.Dinner.Calories)
 	return dayPlan
 }
 
-
+var generateMutex sync.Mutex
 //GeneratePlanView is a view that returns a recipe back te the requester
 func GeneratePlanView (w http.ResponseWriter, r *http.Request){
+	fmt.Println(r.RemoteAddr)
+	now := time.Now()
 	var calories float64
-	err:=json.NewDecoder(r.Body).Decode(&calories)
+	calories = 3000.0
+	json.NewDecoder(r.Body).Decode(&calories)
 	toExclude := []string{}
-	weekPlan := make(WeekPlan)
+	weekPlan := weekPlan{}
+	weekPlan.init()
 	today := time.Now()
+	var wg sync.WaitGroup
 	for i := 1;i <= 7; i++{
+		wg.Add(1)
 		hours := i * 24
 		dayTimeStamp := today.Add(time.Hour * time.Duration(hours))
 		weekDay := dayTimeStamp.Weekday()
-		weekPlan[weekDay.String()] = generateDayPlan(&toExclude, calories)
+		go func(){
+			generateMutex.Lock()
+			weekPlan.plan[weekDay.String()] = generateDayPlan(&toExclude, calories, dayTimeStamp)
+			generateMutex.Unlock()
+			wg.Done()
+		}()
 	}
-	mw , err := json.Marshal(weekPlan)
+	wg.Wait()
+	mw , err := json.Marshal(weekPlan.plan)
 	if err!=nil{
 		panic(err)
 	}
+	fmt.Println(len(toExclude))
 	w.Write([]byte(mw))
+	fmt.Println(time.Since(now).Microseconds())
 }

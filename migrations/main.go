@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 
 	db "github.com/unexpectedtokens/mealr/database"
+	"github.com/unexpectedtokens/mealr/logging"
 )
 
 //RunMigrations runs the migrations in the migrations.sql file
@@ -20,10 +21,11 @@ func RunMigrations() error{
 		panic(err)
 
 	}
-	fmt.Println(string(file))
 	_, err = db.DBCon.Exec(string(file))
 	if err != nil {
+		logging.ErrorLogger(err)
 		return err
 	}
+	fmt.Println("[SUCCES]: Migrations ran succesfully")
 	return nil
 }

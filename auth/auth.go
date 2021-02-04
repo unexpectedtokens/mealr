@@ -1,4 +1,4 @@
-package helpers
+package auth
 
 import (
 	"encoding/json"
@@ -17,8 +17,11 @@ var SigningKey []byte
 
 
 
-
-
+//TokenPair is the instance that's returned from the generatetoken function
+type TokenPair struct {
+	AuthToken []byte
+	Refreshtoken models.RefreshToken
+}
 
 //JWTPayload is the payload that is sent back upon a succesful authentication or user account creation
 type JWTPayload struct {
@@ -45,26 +48,35 @@ func ComparePasswords(password, hash string) bool{
 	return err == nil
 }
 
-// GenerateToken is a function to generate a JWT 
-func GenerateToken(userID int64) ([]byte,error){
+// GenerateTokenPair is a function to generate a JWT 
+func GenerateTokenPair(userID models.UserID) (TokenPair,error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"uid": userID,
-		"exp": time.Now().Add(time.Minute*15).Unix(),
+		"exp": time.Now().Add(time.Minute*30).Unix(),
 		"isAdmin": false,
 	})
 	
-	
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"exp": time.Now().Add(time.Hour * time.Duration(24 * 30)).Unix(),
+	})
+
 	tokenString, err := token.SignedString(SigningKey)
+	refreshTokenString, err := refreshToken.SignedString(SigningKey)
 	if err != nil {
 		logging.ErrorLogger(err)
-		return []byte(""), err
+		return TokenPair{}, err
 	}
-	jwtpayload := JWTPayload{
-		Key: tokenString,
+	authToken := tokenString
+	jwtPayload := JWTPayload{
+		Key: authToken,
 	}
-	encodedJWTPayload, _ := json.Marshal(jwtpayload)
-	
-	return encodedJWTPayload, nil
+	refreshTokenToBeStored := models.RefreshToken{Token: refreshTokenString}
+	authTokenResponseJSON, err := json.Marshal(jwtPayload)
+	tokenPair := TokenPair{
+		Refreshtoken: refreshTokenToBeStored,
+		AuthToken: authTokenResponseJSON,
+	}
+	return tokenPair, nil
 }
 
 

@@ -5,8 +5,9 @@ import (
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"github.com/unexpectedtokens/mealr/helpers"
+	"github.com/unexpectedtokens/mealr/auth"
 	"github.com/unexpectedtokens/mealr/logging"
+
 	"github.com/unexpectedtokens/mealr/migrations"
 	"github.com/unexpectedtokens/mealr/server"
 )
@@ -18,7 +19,7 @@ func main(){
 	if err != nil{
 		panic(err)
 	}
-	helpers.SigningKey = []byte(os.Getenv("JWT_SECRET"))
+	auth.SigningKey = []byte(os.Getenv("JWT_SECRET"))
 	if len(os.Args) > 1{
 		switch os.Args[1]{
 		case "migrate":

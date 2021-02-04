@@ -9,6 +9,4 @@ func UpdateProfileView(){
 	allowedToUpdate := []string{"age"}
 	profile := map[string]interface{}{}
 	fmt.Println(allowedToUpdate, profile)
-
-
 }

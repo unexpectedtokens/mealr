@@ -37,3 +37,7 @@
 [2021-01-22 16:30:04.184332 +0100 CET] ERROR: Token is expired
 [2021-01-22 16:52:00.664634 +0100 CET] ERROR: Token is expired
 [2021-01-23 23:23:29.478716 +0100 CET] ERROR: Token is expired
+[2021-01-26 22:59:46.018855 +0100 CET] ERROR: pq: syntax error at or near "measurement"
+[2021-01-26 23:00:05.185241 +0100 CET] ERROR: pq: syntax error at or near ")"
+[2021-01-26 23:43:19.611564 +0100 CET] ERROR: token contains an invalid number of segments
+[2021-01-26 23:45:00.495195 +0100 CET] ERROR: token contains an invalid number of segments
