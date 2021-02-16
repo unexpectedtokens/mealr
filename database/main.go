@@ -35,29 +35,6 @@ func InitDB(){
 		defer logging.ErrorLogger(err)
 		panic(err)
 	}
-	// _, err = DBCon.Query(`
-	// CREATE TABLE IF NOT EXISTS users(
-	// 	id serial PRIMARY KEY,
-	// 	email VARCHAR(100) UNIQUE NOT NULL,
-	// 	username VARCHAR(100) UNIQUE NOT NULL, 
-	// 	password VARCHAR(61) NOT NULL);
-	// CREATE TABLE IF NOT EXISTS recipes(
-	// 	id serial PRIMARY KEY,
-	// 	yield NUMERIC(5, 2),
-	// 	label VARCHAR(200)
-	// );
-	// CREATE TABLE IF NOT EXISTS profiles(
-	// 	id serial PRIMARY KEY,
-	// 	user_id INT NOT NULL,
-	// 	CONSTRAINT fk_user
-	// 		FOREIGN KEY(user_id)
-	// 			REFERENCES users(id)
-	// );
-	// 	`)
-	// if err != nil{
-	// 	defer logging.ErrorLogger(err)
-	// 	panic(err)
-	// }
 	fmt.Println("Succesfully connected to DB")
 }
 

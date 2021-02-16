@@ -41,3 +41,78 @@
 [2021-01-26 23:00:05.185241 +0100 CET] ERROR: pq: syntax error at or near ")"
 [2021-01-26 23:43:19.611564 +0100 CET] ERROR: token contains an invalid number of segments
 [2021-01-26 23:45:00.495195 +0100 CET] ERROR: token contains an invalid number of segments
+[2021-02-04 21:40:05.315267 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:40:08.750729 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:43:17.832048 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:44:02.677077 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:46:11.608588 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:46:14.59989 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:47:00.915402 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:48:14.894362 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:48:26.469448 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:48:31.241624 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:49:47.539498 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:49:50.026789 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:50:30.93426 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:51:57.464474 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:51:57.730219 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:51:58.02973 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:51:58.281909 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 21:56:46.142648 +0100 CET] ERROR: EOF
+[2021-02-04 21:56:49.331792 +0100 CET] ERROR: EOF
+[2021-02-04 21:57:11.405813 +0100 CET] ERROR: EOF
+[2021-02-04 21:57:44.467997 +0100 CET] ERROR: EOF
+[2021-02-04 21:58:40.53594 +0100 CET] ERROR: EOF
+[2021-02-04 21:59:01.512847 +0100 CET] ERROR: EOF
+[2021-02-04 22:04:25.145575 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 22:04:27.605033 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 22:05:09.641291 +0100 CET] ERROR: EOF
+[2021-02-04 22:05:23.408227 +0100 CET] ERROR: EOF
+[2021-02-04 22:05:55.855513 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 22:12:08.681421 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 22:12:27.964807 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 22:12:30.413288 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 22:12:31.735559 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 22:12:32.285014 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 22:12:32.426207 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 22:12:32.591292 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 22:12:32.756412 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 22:12:32.915854 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-04 22:12:33.050276 +0100 CET] ERROR: invalid character 'o' looking for beginning of value
+[2021-02-10 23:01:28.748723 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:02:18.091985 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:02:43.75083 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:03:19.914401 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:03:40.563151 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:05:03.881642 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:09:02.558046 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:09:26.921288 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:10:06.103691 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:11:14.20496 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:14:26.198157 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:14:52.7318 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:17:13.246208 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:17:31.877954 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:17:50.501366 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:21:16.583341 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:22:27.548314 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:27:11.926237 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:27:13.894251 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:32:24.222922 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:32:25.041156 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:32:25.684587 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:32:26.330444 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:32:26.949194 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:32:27.598242 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:32:28.223052 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:32:34.229907 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:32:46.332543 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:32:47.645609 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:32:48.820924 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:33:06.379817 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-10 23:34:38.015824 +0100 CET] ERROR: illegal base64 data at input byte 43
+[2021-02-12 09:36:56.981514 +0100 CET] ERROR: dial tcp [::1]:5432: connect: connection refused
+[2021-02-12 09:37:18.818124 +0100 CET] ERROR: dial tcp [::1]:5432: connect: connection refused
+[2021-02-12 21:36:16.802628 +0100 CET] ERROR: Token is expired
+[2021-02-13 00:05:44.901877 +0100 CET] ERROR: dial tcp [::1]:5432: connect: connection refused
+[2021-02-13 00:10:39.199623 +0100 CET] ERROR: Token is expired

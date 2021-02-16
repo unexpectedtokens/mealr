@@ -7,9 +7,9 @@ import (
 )
 
 //LoggingMiddleware Logs all requests to the requests.log file
-func LoggingMiddleware(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc{
+func LoggingMiddleware(h http.HandlerFunc) http.HandlerFunc{
 	return func(w http.ResponseWriter, r *http.Request){
 		logging.RequestLogger(r)
-		fn(w, r)
+		h.ServeHTTP(w, r)
 	}
 }

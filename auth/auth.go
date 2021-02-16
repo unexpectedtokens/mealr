@@ -2,6 +2,7 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -29,6 +30,19 @@ type JWTPayload struct {
 }
 // Validate is  a user method to check if it's valid for registering a new user to the db
 
+
+
+//ReturnUnauthorized returns a 401 unauthorized status code
+func ReturnUnauthorized(w http.ResponseWriter){
+	http.Error(w, "unauthorized", http.StatusUnauthorized)
+}
+
+
+//ReturnBadRequest returns a 400 bad request status code
+func ReturnBadRequest(w http.ResponseWriter){
+	http.Error(w, "bad request", http.StatusBadRequest)
+}
+
 //DecodeRequestBodyIntoUser is a function that decodes a request body json into a user struct and returns it
 func DecodeRequestBodyIntoUser(r *http.Request) (models.UserModel,error){
 	var user models.UserModel
@@ -52,7 +66,7 @@ func ComparePasswords(password, hash string) bool{
 func GenerateTokenPair(userID models.UserID) (TokenPair,error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"uid": userID,
-		"exp": time.Now().Add(time.Minute*30).Unix(),
+		"exp": time.Now().Add(time.Minute*9000).Unix(),
 		"isAdmin": false,
 	})
 	
@@ -97,4 +111,16 @@ func CheckIfNotExpired(exp time.Time) bool{
 	now := time.Now().Before((exp))
 	return now
 
+}
+
+
+//DeriveUserFromReqID retrieves a user id from the db to check if it exists and then returns it
+func DeriveUserFromReqID(id models.UserID) (models.UserID, error){
+	user := models.UserModel{}
+	
+	fmt.Println(user.ID)
+	if user.ID == 0{
+		return 0, fmt.Errorf("No such user with id %d", id)
+	}
+	return user.ID, nil
 }

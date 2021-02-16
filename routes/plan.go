@@ -198,6 +198,7 @@ func returnRecipe(exclude *[]string, typeOf string, calories float64, c chan Rec
 		returnRecipe(exclude, typeOf, calories, c)
 		return
 	}
+	recipe.Yield = 1
 	excludeMutex.Lock()
 	*exclude = append(*exclude, recipe.Label)
 	excludeMutex.Unlock()
@@ -227,8 +228,7 @@ func generateDayPlan(exclude *[]string, calories float64, day time.Time) DayPlan
 var generateMutex sync.Mutex
 //GeneratePlanView is a view that returns a recipe back te the requester
 func GeneratePlanView (w http.ResponseWriter, r *http.Request){
-	fmt.Println(r.RemoteAddr)
-	now := time.Now()
+	// now := time.Now()
 	var calories float64
 	calories = 3000.0
 	json.NewDecoder(r.Body).Decode(&calories)
@@ -254,7 +254,7 @@ func GeneratePlanView (w http.ResponseWriter, r *http.Request){
 	if err!=nil{
 		panic(err)
 	}
-	fmt.Println(len(toExclude))
+	// fmt.Println(len(toExclude))
 	w.Write([]byte(mw))
-	fmt.Println(time.Since(now).Microseconds())
+	// fmt.Println(time.Since(now).Microseconds())
 }

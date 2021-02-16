@@ -13,12 +13,14 @@ import (
 )
 
 
+
 func main(){
 	logging.InitLogging()
 	err := godotenv.Load()
 	if err != nil{
 		panic(err)
 	}
+	
 	auth.SigningKey = []byte(os.Getenv("JWT_SECRET"))
 	if len(os.Args) > 1{
 		switch os.Args[1]{

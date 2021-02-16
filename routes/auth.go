@@ -1,5 +1,7 @@
 package routes
 
+//This file contains all the routes that have to do with authentication
+
 import (
 	"fmt"
 	"net/http"
@@ -10,10 +12,6 @@ import (
 	"github.com/unexpectedtokens/mealr/models"
 	"github.com/unexpectedtokens/mealr/util"
 )
-var signingkey = []byte("XinthiaBestBab3Ever")
-
-
-
 
 // RegisterView is a function to register a user
 func RegisterView(w http.ResponseWriter, r *http.Request){
@@ -24,9 +22,18 @@ func RegisterView(w http.ResponseWriter, r *http.Request){
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+
 	}
 	if !user.Validate(){
 		http.Error(w, "",http.StatusBadRequest)
+		return
+	}
+	if tbr, ok, err := user.CheckIfExists(); ok{
+		if err != nil{
+			http.Error(w, "", http.StatusInternalServerError)
+			return
+		}
+		http.Error(w, fmt.Sprintf("%s is already in use", tbr), http.StatusFound)
 		return
 	}
 	var hashedPassword string
@@ -35,11 +42,14 @@ func RegisterView(w http.ResponseWriter, r *http.Request){
 	id, err := user.Save(true)
 	if err != nil{
 		defer logging.ErrorLogger(err)
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
+	p := models.Profile{UserID: id}
+	go p.Save()
 	if tokenPair, err := auth.GenerateTokenPair(id); err == nil{
 		w.Write(tokenPair.AuthToken)
+		return
 	}
 	
 }
@@ -52,22 +62,30 @@ func LoginView(w http.ResponseWriter, r *http.Request){
 	user, err := auth.DecodeRequestBodyIntoUser(r)
 	if err != nil {
 		defer logging.ErrorLogger(err)
-        http.Error(w, err.Error(), http.StatusBadRequest)
+        http.Error(w, "", http.StatusBadRequest)
         return
 	}
+	fmt.Println(user.Username, user.Password)
+
 	var (
 		username string
 		password string
 		id models.UserID
 	)
-	err = db.DBCon.QueryRow("SELECT id, username, password FROM users WHERE username = $1 OR email = $2;", user.Username, user.Email).Scan( &id, &username, &password)
+	stmt ,err := db.DBCon.Prepare("SELECT id, username, password FROM users WHERE username = $1;")
+	row := stmt.QueryRow(user.Username)
+	err = row.Scan( &id, &username, &password)
+
 	if err != nil{
-		http.Error(w, err.Error(), http.StatusNotFound)
+		fmt.Println(err.Error())
+		http.Error(w, fmt.Sprintf("{ %s: %s, }", "error", err.Error()), http.StatusNotFound)
+		return
 	}
+	stmt.Close()
 	if auth.ComparePasswords(user.Password, password){
 		tokenPair, err := auth.GenerateTokenPair(id)
 		if err != nil{
-			logging.ErrorLogger(err)
+			go logging.ErrorLogger(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -75,7 +93,7 @@ func LoginView(w http.ResponseWriter, r *http.Request){
 		w.Write(tokenPair.AuthToken)
 
 	}else{
-		w.WriteHeader(http.StatusUnauthorized)
+		auth.ReturnUnauthorized(w)
 	}
 }
 
@@ -88,7 +106,7 @@ func RefreshView(w http.ResponseWriter, r *http.Request, id interface{}){
 	var rt interface{}
 	fmt.Println(db.DBCon.QueryRow(query, id).Scan(&rt))
 	if rt == nil{
-		http.Error(w, "", http.StatusUnauthorized)
+		auth.ReturnUnauthorized(w)
 		return
 	}
 	
