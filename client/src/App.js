@@ -33,7 +33,7 @@ function App() {
             path="/app"
             render={() =>
               auth.isAuthenticated ? (
-                <Main setAuth={setAuth} />
+                <Main setAuth={setAuth} auth={auth} />
               ) : (
                 <Redirect to="/auth" />
               )

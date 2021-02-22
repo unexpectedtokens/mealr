@@ -28,7 +28,6 @@ func applyMiddleware(h http.HandlerFunc, m ...middlewareFunc) http.HandlerFunc{
 		if len(m) < 1{
 			return middleware.AllowCORSMiddleware(h) 
 		}
-		//middlewareExtended := append(commonMiddleware, m...)
 		wrapped := h
 		middlewareList := append(commonMiddleware, m...)
 		for i := len(middlewareList) - 1; i >= 0; i--{
@@ -44,10 +43,14 @@ func applyMiddleware(h http.HandlerFunc, m ...middlewareFunc) http.HandlerFunc{
 func handleRequests(){
 	http.HandleFunc("/auth/create/", applyMiddleware(routes.RegisterView))
 	http.HandleFunc("/auth/obtain/", applyMiddleware(routes.LoginView))
+	http.HandleFunc("/auth/retrieve/", applyMiddleware(routes.GetUserView, middleware.AuthorizeMiddleware))
 	// http.HandleFunc("/auth/update/", applyMiddleware(middleware.AuthorizeMiddleware(routes.ChangeUserView)))
 	// http.HandleFunc("/auth/refresh/", applyMiddleware(middleware.AuthorizeMiddleware(routes.RefreshView)))
-	http.HandleFunc("/api/generateplan/", applyMiddleware(routes.GeneratePlanView))
+	http.HandleFunc("/api/mealplan/generate/", applyMiddleware(routes.GeneratePlanView, middleware.AuthorizeMiddleware))
+	http.HandleFunc("/api/profile/getactivityoptions/", applyMiddleware(routes.ActivityOptionsView))
+	http.HandleFunc("/api/profile/", applyMiddleware(routes.GetProfileView, middleware.AuthorizeMiddleware))
 	http.HandleFunc("/api/profile/update/", applyMiddleware(routes.UpdateProfileView, middleware.AuthorizeMiddleware))
+	http.HandleFunc("/api/profile/isvalid/", applyMiddleware(routes.ProfileValidForMealPlanGeneratorView, middleware.AuthorizeMiddleware))
 	http.HandleFunc("/site/", middleware.LoggingMiddleware(serveSPA))
 	buildHandler := http.FileServer(http.Dir("client/build"))
 	http.Handle("/", buildHandler)

@@ -7,8 +7,9 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/unexpectedtokens/mealr/auth"
 	"github.com/unexpectedtokens/mealr/logging"
-
 	"github.com/unexpectedtokens/mealr/migrations"
+	"github.com/unexpectedtokens/mealr/scraper"
+
 	"github.com/unexpectedtokens/mealr/server"
 )
 
@@ -20,16 +21,23 @@ func main(){
 	if err != nil{
 		panic(err)
 	}
-	
 	auth.SigningKey = []byte(os.Getenv("JWT_SECRET"))
 	if len(os.Args) > 1{
-		switch os.Args[1]{
-		case "migrate":
-			migrations.RunMigrations()
-		case "runserver":
-			server.HTTPServer()
-		case "test":
+		for _, x := range os.Args{
+			if x == "flush"{
+				migrations.Flush()
+			}
+			if x == "migrate"{
+				migrations.RunMigrations()
+			}
+			if x == "scrape"{
+				scraper.CollectRecipes()
+			}
+			if x == "runserver"{
+				server.HTTPServer()
+			}
 		}
+		
 	}else{
 		server.HTTPServer()
 	}

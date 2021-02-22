@@ -16,6 +16,7 @@ func RunMigrations() error{
 		}
 	}()
 	db.InitDB()
+	defer db.DBCon.Close()
 	file, err := ioutil.ReadFile("migrations/migrations.sql")
 	if err != nil{
 		panic(err)
@@ -28,4 +29,16 @@ func RunMigrations() error{
 	}
 	fmt.Println("[SUCCES]: Migrations ran succesfully")
 	return nil
+}
+
+//Flush deletes all tables from postgres
+func Flush(){
+	query := "DROP TABLE users CASCADE; DROP TABLE profiles; DROP TABLE jwt_auth; DROP TABLE recipes CASCADE; DROP TABLE ingredients_from_recipe; DROP TABLE methods_from_recipe;"
+	db.InitDB()
+	defer db.DBCon.Close()
+	_, err := db.DBCon.Exec(query)
+	if err != nil{
+		panic(err)
+	}
+	fmt.Println("[SUCCES]: Flush ran succesfully")
 }

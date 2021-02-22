@@ -1,64 +1,63 @@
 import {
   Box,
   CircularProgress,
+  Fade,
   Grid,
-  Grow,
   Paper,
   Typography,
 } from "@material-ui/core";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import config from "../../../../../Config/config";
 
-function MealPlanner() {
+function MealPlanner({ auth }) {
   const [plan, setPlan] = useState({});
-  const [planLoaded, setPlanLoaded] = useState(false);
-  const fetchMealPlan = async () => {
-    const response = await fetch(`${config.API_URL}/api/generateplan/`, {
+  const [loading] = useState(false);
+
+  const fetchMealPlan = useCallback(async () => {
+    const response = await fetch(`${config.API_URL}/api/mealplan/generate/`, {
       method: "GET",
+      headers: {
+        Authorization: auth.authInfo.Key,
+      },
     });
     const data = await response.json();
     console.log(data);
     setPlan(data);
-  };
+  }, [auth.authInfo.Key]);
   useEffect(() => {
     fetchMealPlan();
-  }, []);
-  useEffect(() => {
-    setPlanLoaded(Object.keys(plan).length > 0);
-  }, [plan, setPlanLoaded]);
+  }, [fetchMealPlan]);
   return (
-    <Paper>
-      <Box p={1}>
-        <Grid container>
-          {planLoaded ? (
-            <Grow in={planLoaded}>
+    <Fade in={true}>
+      <Paper elevation={1}>
+        <Box p={1}>
+          <Grid container>
+            {!loading ? (
               <Box>
                 {Object.keys(plan).map((i) => {
                   const day = plan[i];
                   const Breakfast = day.Breakfast;
-                  const Lunch = day.Lunch;
-                  const dinner = day.Dinner;
+                  // const Lunch = day.Lunch;
+                  // const dinner = day.Dinner;
                   return (
                     <Grid item>
-                      <Grow in={planLoaded}>
-                        <Paper>
-                          {Object.keys(Breakfast).map((item) => {
-                            console.log(item, Breakfast[item]);
-                            return <Typography>{Breakfast.Label}</Typography>;
-                          })}
-                        </Paper>
-                      </Grow>
+                      <Paper>
+                        {Object.keys(Breakfast).map((item) => {
+                          console.log(item, Breakfast[item]);
+                          return <Typography>{Breakfast.Label}</Typography>;
+                        })}
+                      </Paper>
                     </Grid>
                   );
                 })}
               </Box>
-            </Grow>
-          ) : (
-            <CircularProgress size="1.5rem" />
-          )}
-        </Grid>
-      </Box>
-    </Paper>
+            ) : (
+              <CircularProgress size="1.5rem" />
+            )}
+          </Grid>
+        </Box>
+      </Paper>
+    </Fade>
   );
 }
 

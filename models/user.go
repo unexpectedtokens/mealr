@@ -77,3 +77,16 @@ func (u *UserModel) Save(newUser bool) (UserID, error){
 	row.Scan(&id)
 	return id, nil
 }
+
+//Retrieve retrieves a user instance from the database
+func (u *UserModel) Retrieve() error{
+	stmt, err := db.DBCon.Prepare("SELECT username, email FROM users WHERE id=$1")
+	if err !=nil{
+		return err
+	}
+	err = stmt.QueryRow(u.ID).Scan(&u.Username, &u.Email)
+	if err !=nil {
+		return err
+	}
+	return nil
+}

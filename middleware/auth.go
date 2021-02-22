@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -33,7 +32,6 @@ func AuthorizeMiddleware(next http.HandlerFunc) http.HandlerFunc{
 
 			if UID, ok := claims["uid"].(float64); ok{
 				if auth.CheckIfNotExpired(tm){
-					fmt.Println(UID)
 					ctx := context.WithValue(r.Context(), w, models.UserID(int64(UID)))
 					next.ServeHTTP(w, r.WithContext(ctx))
 				}else{
@@ -41,7 +39,7 @@ func AuthorizeMiddleware(next http.HandlerFunc) http.HandlerFunc{
 				}
 			}else{
 				auth.ReturnUnauthorized(w)
-		}
+			}
 		}
 		// if err != nil{
 		// 	http.Error(w, "unauthorized", http.StatusUnauthorized)

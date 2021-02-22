@@ -14,7 +14,6 @@ const validateCredentials = (credentials) => {
   Object.keys(credentials).forEach((item) => {
     const cred = { ...credentials[item] };
     if (cred.value.length < cred.validation.minLength) {
-      console.log(cred);
       cred.error = {
         ex: true,
         text: `${cred.label} needs to be at least ${cred.validation.minLength} characters`,
@@ -34,7 +33,6 @@ const validateCredentials = (credentials) => {
         cred.error = { ex: true, text: "Passwords do not match" };
       }
     }
-    console.log(cred.error.ex);
   });
   return creds;
 };

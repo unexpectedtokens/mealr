@@ -3,6 +3,7 @@ package routes
 //This file contains all the routes that have to do with authentication
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -115,7 +116,8 @@ func RefreshView(w http.ResponseWriter, r *http.Request, id interface{}){
 //ChangeUserView is a function to change the users password
 func ChangeUserView(w http.ResponseWriter, r *http.Request, id interface{}){
 	if !util.CheckIfMethodAllowed(w, r, []string{"PUT"}){
-		return
+		auth.ReturnBadRequest(w)
+		return 
 	}
 	if user, err := auth.DecodeRequestBodyIntoUser(r); err == nil{
 		r.Context().Value(user)
@@ -129,7 +131,35 @@ func ChangeUserView(w http.ResponseWriter, r *http.Request, id interface{}){
 	w.Write([]byte("200"))	
 }
 
-
+//SafeUserResponse is a user instance stripped of the unsafe properties such as password
+type SafeUserResponse struct {
+		Username string
+		Email string
+}
+//GetUserView gets a user from the db and returns it
+func GetUserView(w http.ResponseWriter, r *http.Request){
+	if !util.CheckIfMethodAllowed(w, r, []string{"GET"}){
+		auth.ReturnBadRequest(w)
+		return 
+	}
+	
+	if derivedID, ok := r.Context().Value(w).(models.UserID);ok{
+		user := models.UserModel{}
+		user.ID = derivedID
+		err := user.Retrieve()
+		if err != nil{
+			auth.ReturnBadRequest(w)
+			return
+		}
+		res := SafeUserResponse{Username: user.Username, Email: user.Password}
+		jsonResponse, err := json.Marshal(res)
+		if err !=nil{
+			auth.ReturnBadRequest(w)
+			return
+		}
+		w.Write(jsonResponse)
+	}
+}
 
 //DeleteUserView is a function
 func DeleteUserView(w http.ResponseWriter, r *http.Request, id interface{}){

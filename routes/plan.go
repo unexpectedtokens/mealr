@@ -7,6 +7,10 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/unexpectedtokens/mealr/auth"
+	"github.com/unexpectedtokens/mealr/calories"
+	"github.com/unexpectedtokens/mealr/models"
 )
 
 //recipes is a slice to hold recipes
@@ -205,7 +209,7 @@ func returnRecipe(exclude *[]string, typeOf string, calories float64, c chan Rec
 	c <- recipe
 }
 
-func generateDayPlan(exclude *[]string, calories float64, day time.Time) DayPlan{
+func generateDayPlan(exclude *[]string, calories int, day time.Time, amountOfMeals int) DayPlan{
 
 	//fmt.Println("calories from generatedayplan",calories)
 	var dayPlan DayPlan
@@ -213,9 +217,9 @@ func generateDayPlan(exclude *[]string, calories float64, day time.Time) DayPlan
 	breakfastChannel := make(chan Recipe)
 	lunchChannel := make(chan Recipe)
 	dinnerChannel := make(chan Recipe)
-	go returnRecipe(exclude, "Breakfast", calories / 3.0, breakfastChannel)
-	go returnRecipe(exclude, "Lunch", calories / 3.0, lunchChannel)
-	go returnRecipe(exclude, "Dinner", calories / 3.0, dinnerChannel)
+	go returnRecipe(exclude, "Breakfast", float64(calories) / 3.0, breakfastChannel)
+	go returnRecipe(exclude, "Lunch", float64(calories) / 3.0, lunchChannel)
+	go returnRecipe(exclude, "Dinner", float64(calories) / 3.0, dinnerChannel)
 	dayPlan.Breakfast = <- breakfastChannel
 	dayPlan.Lunch = <-lunchChannel
 	dayPlan.Dinner = <- dinnerChannel
@@ -229,32 +233,47 @@ var generateMutex sync.Mutex
 //GeneratePlanView is a view that returns a recipe back te the requester
 func GeneratePlanView (w http.ResponseWriter, r *http.Request){
 	// now := time.Now()
-	var calories float64
-	calories = 3000.0
-	json.NewDecoder(r.Body).Decode(&calories)
-	toExclude := []string{}
-	weekPlan := weekPlan{}
-	weekPlan.init()
-	today := time.Now()
-	var wg sync.WaitGroup
-	for i := 1;i <= 7; i++{
-		wg.Add(1)
-		hours := i * 24
-		dayTimeStamp := today.Add(time.Hour * time.Duration(hours))
-		weekDay := dayTimeStamp.Weekday()
-		go func(){
-			generateMutex.Lock()
-			weekPlan.plan[weekDay.String()] = generateDayPlan(&toExclude, calories, dayTimeStamp)
-			generateMutex.Unlock()
-			wg.Done()
-		}()
+	if derivedID, ok := r.Context().Value(w).(models.UserID); ok{
+		profile := models.Profile{UserID: derivedID}
+		profile.Retrieve()
+		if profile.Validate(){
+			var nc int
+			nc, err := calories.CalculateNeededCalories(profile)
+			if err !=nil{
+				auth.ReturnBadRequest(w)
+				return
+			}
+			var amountOfMeals int
+			json.NewDecoder(r.Body).Decode(&amountOfMeals)
+			if amountOfMeals > 5 || amountOfMeals< 2{
+				auth.ReturnBadRequest(w)
+				return
+			}
+			toExclude := []string{}
+			weekPlan := weekPlan{}
+			weekPlan.init()
+			today := time.Now()
+			var wg sync.WaitGroup
+			for i := 1;i <= 7; i++{
+				wg.Add(1)
+				hours := i * 24
+				dayTimeStamp := today.Add(time.Hour * time.Duration(hours))
+				weekDay := dayTimeStamp.Weekday()
+				go func(){
+					generateMutex.Lock()
+					weekPlan.plan[weekDay.String()] = generateDayPlan(&toExclude, nc, dayTimeStamp, amountOfMeals)
+					generateMutex.Unlock()
+					wg.Done()
+				}()
+			}
+			wg.Wait()
+			mw, err := json.Marshal(weekPlan.plan)
+			if err!=nil{
+				panic(err)
+			}
+			w.Write([]byte(mw))
+		} else{
+			auth.ReturnBadRequest(w)
+		}
 	}
-	wg.Wait()
-	mw , err := json.Marshal(weekPlan.plan)
-	if err!=nil{
-		panic(err)
-	}
-	// fmt.Println(len(toExclude))
-	w.Write([]byte(mw))
-	// fmt.Println(time.Since(now).Microseconds())
 }

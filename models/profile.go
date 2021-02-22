@@ -23,6 +23,7 @@ type Profile struct {
 	UserID UserID
 	Gender string
 	Dob time.Time
+	Loa string
 }
 //PTCFields specify the fields that are Permitted to Change
 type PTCFields struct {
@@ -40,7 +41,7 @@ type PTCFields struct {
 //Save is a function to create a profile
 func (p *Profile) Save() {
 	if p.UserID != 0{
-		_, err := db.DBCon.Query("INSERT INTO profiles (user_id) VALUES ($1) RETURNING id;", p.UserID)
+		_, err := db.DBCon.Query("INSERT INTO profiles (user_id, vegan, vegetarian, glutenallergy) VALUES ($1, $2, $3, $4) RETURNING id;", p.UserID, false, false, false)
 		if err!=nil{
 			panic(err)
 		}
@@ -56,7 +57,7 @@ func (p *Profile) Validate() bool{
 	valid = valid && p.Height > 0
 	valid = valid && p.Gender != ""
 	valid = valid && p.Weight > 0
-	valid = valid && p.WeightGoal > 0
+	valid = valid && int(time.Since(p.Dob).Hours()) / (24 * 365) > 5
 	return valid
 }
 
@@ -67,6 +68,8 @@ type nullableFields struct{
 	Weight sql.NullFloat64
 	Dob sql.NullTime
 	Gender sql.NullString
+	Loa sql.NullString
+	
 }
 
 
@@ -96,18 +99,23 @@ func (n *nullableFields) populateNFields(p *Profile){
 	}else {
 		p.Gender = ""
 	}
+	if n.Loa.Valid{
+		p.Loa = n.Loa.String
+	}else{
+		p.Loa = ""
+	}
 }
 
 
 //Retrieve retrieves a profile row from the db with a received uid
 func (p *Profile) Retrieve()  error{
-	stmt, err := db.DBCon.Prepare("SELECT id, height, dob, weight_goal, weight, gender FROM profiles WHERE user_id=$1;")
+	stmt, err := db.DBCon.Prepare("SELECT id, height, dob, weight_goal, weight, gender, loa FROM profiles WHERE user_id=$1;")
 	if err !=nil{
 		return err
 	}
 	var nf nullableFields
 
-	err = stmt.QueryRow(p.UserID).Scan(&p.ID, &nf.Height, &nf.Dob ,&nf.WeightGoal, &nf.Weight, &nf.Gender)
+	err = stmt.QueryRow(p.UserID).Scan(&p.ID, &nf.Height, &nf.Dob ,&nf.WeightGoal, &nf.Weight, &nf.Gender, &nf.Loa)
 	if (err != nil) || p.ID == 0{
 		return err
 	}
@@ -138,6 +146,10 @@ func (p *Profile) Update(NewProfile Profile) error{
 	if p.Gender != NewProfile.Gender{
 		values = append(values, NewProfile.Gender)
 		q += fmt.Sprintf("gender=$%d, ", len(values))
+	}
+	if p.Loa != NewProfile.Loa{
+		values = append(values, NewProfile.Loa)
+		q += fmt.Sprintf("loa=$%d, ", len(values))
 	}
 	if len(values) == 0{
 		return fmt.Errorf("Data not different")
