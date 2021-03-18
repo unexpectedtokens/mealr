@@ -12,6 +12,7 @@ import Recipes from "./AppPages/Recipes/Index";
 function Main({ setAuth, auth }) {
   const [appRoute, setAppRoute] = useState("/");
   const [loading, setLoading] = useState(true);
+
   // const [loading, setLoading] = useState(true)
   //const theme = useTheme();
 
@@ -19,42 +20,65 @@ function Main({ setAuth, auth }) {
   const history = useHistory();
 
   const handleLogoutButtonPressed = () => {
-    setAuth({ isAuthenticated: false, authInfo: { Key: "" } });
+    localStorage.removeItem("Key");
+    setLoading(true);
   };
-  const fetchUserCreds = async () => {
-    const response = await fetch(`${config.API_URL}/auth/retrieve/`, {
-      method: "GET",
-      headers: {
-        Authorization: auth.authInfo.Key,
-      },
-    });
-    const data = await response.json();
-    setAuth((cur) => ({
-      ...cur,
-      authInfo: { ...cur.authInfo, email: data.Email, username: data.Username },
-    }));
+  const fetchUserCreds = async (Key) => {
+    try {
+      const response = await fetch(`${config.API_URL}/auth/retrieve/`, {
+        method: "GET",
+        headers: {
+          Authorization: Key,
+        },
+      });
+      const data = await response.json();
+      setAuth((cur) => ({
+        ...cur,
+        isAuthenticated: true,
+        authInfo: {
+          ...cur.authInfo,
+          email: data.Email,
+          username: data.Username,
+          Key,
+        },
+      }));
+      setLoading(false);
+    } catch (e) {
+      console.log(e);
+      localStorage.removeItem("Key");
+      setLoading(false);
+      setAuth({ isAuthenticated: false, authInfo: { Key: "" } });
+    }
   };
   const handleRouteChange = (url) => {
     history.push(`${path}${url}`);
     setAppRoute(url);
   };
-
   useEffect(() => {
-    if (auth.isAuthenticated) {
-      setLoading(false);
+    if (loading) {
+      const Key = localStorage.getItem("Key");
+      if (Key !== null) {
+        fetchUserCreds(Key);
+      } else {
+        setAuth({ isAuthenticated: false, authInfo: { Key: "" } });
+        setLoading(false);
+      }
     }
-  }, [auth.isAuthenticated]);
-  useEffect(() => {
-    fetchUserCreds();
     //eslint-disable-next-line
-  }, []);
+  }, [loading]);
+  useEffect(() => {
+    if (!auth.isAuthenticated && !loading) {
+      history.push("/auth/");
+    }
+  }, [auth.isAuthenticated, loading, history]);
   return (
     <Layout
       handleLogoutButtonPressed={handleLogoutButtonPressed}
       handleRouteChange={handleRouteChange}
       appRoute={appRoute}
+      auth={auth}
     >
-      {!loading ? (
+      {!loading || !auth.isAuthenticated ? (
         <Switch>
           <Route
             path={`${path}/profile`}

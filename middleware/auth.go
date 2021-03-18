@@ -11,6 +11,10 @@ import (
 	"github.com/unexpectedtokens/mealr/models"
 )
 
+type contextKey string
+
+//ContextKey is used to get the user from context
+const ContextKey contextKey = "user"
 //AuthorizeMiddleware checks for a valid jwt and passes the id unto the view
 func AuthorizeMiddleware(next http.HandlerFunc) http.HandlerFunc{
 	return func(w http.ResponseWriter, r *http.Request){
@@ -32,7 +36,7 @@ func AuthorizeMiddleware(next http.HandlerFunc) http.HandlerFunc{
 
 			if UID, ok := claims["uid"].(float64); ok{
 				if auth.CheckIfNotExpired(tm){
-					ctx := context.WithValue(r.Context(), w, models.UserID(int64(UID)))
+					ctx := context.WithValue(r.Context(), ContextKey, models.UserID(int64(UID)))
 					next.ServeHTTP(w, r.WithContext(ctx))
 				}else{
 					auth.ReturnUnauthorized(w)

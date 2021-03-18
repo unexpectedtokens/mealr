@@ -68,19 +68,22 @@ function Home({ auth, navigate }) {
             </Grow>
           ) : null}
           <Box py={2}>
-            <Typography variant="h4">
-              Welcome{" "}
-              {auth.authInfo.username !== "" ? (
-                <>
-                  {auth.authInfo.username[0].toUpperCase() +
-                    auth.authInfo.username.slice(
-                      1,
-                      auth.authInfo.username.length
-                    ) +
-                    ` - ${profileValid}`}
-                </>
-              ) : null}
-            </Typography>
+            <Paper>
+              <Box p={2}>
+                <Typography variant="h4">
+                  Welcome{" "}
+                  {auth.authInfo.username !== "" ? (
+                    <>
+                      {auth.authInfo.username[0].toUpperCase() +
+                        auth.authInfo.username.slice(
+                          1,
+                          auth.authInfo.username.length
+                        )}
+                    </>
+                  ) : null}
+                </Typography>
+              </Box>
+            </Paper>
           </Box>
           <Box flex={1} pt={2}>
             <Grid container spacing={2}>

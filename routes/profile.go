@@ -7,16 +7,18 @@ import (
 
 	"github.com/unexpectedtokens/mealr/auth"
 	"github.com/unexpectedtokens/mealr/calories"
+	"github.com/unexpectedtokens/mealr/middleware"
 	"github.com/unexpectedtokens/mealr/models"
 	"github.com/unexpectedtokens/mealr/util"
 )
 
 // UpdateProfileView updates an existing
 func UpdateProfileView(w http.ResponseWriter, r *http.Request){
+	
 	if !util.CheckIfMethodAllowed(w, r, []string{"PUT", "UPDATE"}){
 		return
 	}
-	if derivedID, ok := r.Context().Value(w).(models.UserID); ok{
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(models.UserID); ok{
 		newProfile := models.Profile{}
 		profile := models.Profile{}
 		profile.UserID = derivedID
@@ -28,12 +30,12 @@ func UpdateProfileView(w http.ResponseWriter, r *http.Request){
 		err = json.NewDecoder(r.Body).Decode(&newProfile)
 		if err != nil{
 			fmt.Println(err)
-			auth.ReturnBadRequest(w)
+			util.ReturnBadRequest(w)
 			return
 		}
 		if err = profile.Update(newProfile);err !=nil{
 			fmt.Println(err)
-			auth.ReturnBadRequest(w)
+			util.ReturnBadRequest(w)
 		}
 	
 	} else {
@@ -43,17 +45,17 @@ func UpdateProfileView(w http.ResponseWriter, r *http.Request){
 }
 //GetProfileView gets a profile based on the id passed in the JWT
 func GetProfileView(w http.ResponseWriter, r *http.Request){
-	if derivedID, ok := r.Context().Value(w).(models.UserID);ok{
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(models.UserID);ok{
 		profile := models.Profile{UserID: derivedID}
 		err := profile.Retrieve()
 		if err != nil{
-			auth.ReturnBadRequest(w)
+			util.ReturnBadRequest(w)
 			return
 		}
 
 		res, err := json.Marshal(profile)
 		if err !=nil{
-			auth.ReturnBadRequest(w)
+			util.ReturnBadRequest(w)
 			return
 		}
 		w.Write(res)
@@ -68,7 +70,7 @@ func ActivityOptionsView(w http.ResponseWriter, r *http.Request){
 	}
 	response, err := json.Marshal(calories.ActivityOptions)
 	if err != nil{
-		auth.ReturnBadRequest(w)
+		util.ReturnBadRequest(w)
 		return
 	}
 	w.Write(response)
@@ -82,7 +84,7 @@ func ProfileValidForMealPlanGeneratorView(w http.ResponseWriter, r *http.Request
 	if !util.CheckIfMethodAllowed(w, r, []string{"GET"}){
 		return
 	}
-	if derivedID, ok := r.Context().Value(w).(models.UserID);ok{
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(models.UserID);ok{
 		profile := models.Profile{}
 		profile.UserID = derivedID
 		profile.Retrieve()
@@ -94,7 +96,7 @@ func ProfileValidForMealPlanGeneratorView(w http.ResponseWriter, r *http.Request
 		} 
 		jsonResponse, err := json.Marshal(res)
 			if err !=nil{
-				auth.ReturnBadRequest(w)
+				util.ReturnBadRequest(w)
 			}
 			w.Write(jsonResponse)
 	}

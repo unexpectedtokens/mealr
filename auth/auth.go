@@ -38,10 +38,7 @@ func ReturnUnauthorized(w http.ResponseWriter){
 }
 
 
-//ReturnBadRequest returns a 400 bad request status code
-func ReturnBadRequest(w http.ResponseWriter){
-	http.Error(w, "bad request", http.StatusBadRequest)
-}
+
 
 //DecodeRequestBodyIntoUser is a function that decodes a request body json into a user struct and returns it
 func DecodeRequestBodyIntoUser(r *http.Request) (models.UserModel,error){

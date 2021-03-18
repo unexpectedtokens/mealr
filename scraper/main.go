@@ -8,64 +8,73 @@ import (
 
 	"github.com/gocolly/colly"
 	db "github.com/unexpectedtokens/mealr/database"
+	"github.com/unexpectedtokens/mealr/models"
 )
 
-type crawledRecipe struct{
-	Title string
-	Source string
-	Ingredients []string
-	Method []string
-	PrepTime string
-	CookingTime string
-	Serves int
-	CalsProvided bool
-	CalsPerServing int
-	Vegetarian bool
-	Vegan bool
-}
 
-func (c *crawledRecipe) isValid() (valid bool) {
-	valid = true
-	valid = c.Title != "" && valid
-	return valid
-}
 
-type crawledRecipes []crawledRecipe
+
+
+type crawledRecipes []models.Recipe
 
 var cwvMutex sync.Mutex
 var calorieWordVariations []string = []string{"kcal", "cal", "calories"}
 
 func populateDBWithRecipes(recs crawledRecipes){
+
 	numInserted := 0
+	faultyRecs := 0
 	db.InitDB()
 	defer func(){
 		db.DBCon.Close()
 		fmt.Println("Database connection closed")
 	}()
-	stmt, err := db.DBCon.Prepare("INSERT INTO recipes(title, source, serves, cals_provided, cals_per_serving, preptime, cooktime) VALUES ($1, $2, $3, $4, $5, $6, $7);")
+	stmt, err := db.DBCon.Prepare("INSERT INTO recipes(title, source, serves, cals_provided, cals_per_serving, preptime, cooktime, source_url, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id;")
+	
 	if err != nil {
 		panic(err)
 	}
+	ingStmt, err := db.DBCon.Prepare("INSERT INTO ingredients_from_recipe(recipeid, ingredient) VALUES ($1, $2);")
+	if err != nil {
+		panic(err)
+	}
+	metStmt, err := db.DBCon.Prepare("INSERT INTO methods_from_recipe(recipeid, method) VALUES ($1, $2);")
 	for _, x := range recs{
-		if x.isValid(){
-		_, err := stmt.Exec(x.Title, x.Source, x.Serves, x.CalsProvided, x.CalsPerServing, x.PrepTime, x.CookingTime)
-		if err != nil{
-			fmt.Println(err)
-			panic(err)
-		}
-		numInserted++
+		if x.IsValidForDBInsertion(){
+			var returnedID int
+			err = stmt.QueryRow(x.Title, x.Source, x.Serves, x.CalsProvided, x.CalsPerServing, x.PrepTime, x.CookingTime, x.SourceURL, x.ImageURL).Scan(&returnedID)
+			if err != nil{
+				fmt.Println(err)
+				panic(err)
+			}
+			for _, y := range x.Ingredients{
+				_, err = ingStmt.Exec(returnedID, y)
+				if err != nil{
+					fmt.Println(err)
+				}	
+			}
+			for _, y := range x.Method{
+				_, err = metStmt.Exec(returnedID, y )
+				if err != nil{
+					fmt.Println(err)
+				}
+			}
+			numInserted++
+		}else{
+			faultyRecs++
 		}
 	}
 	fmt.Println(numInserted, "items inserted into the Database")
+	fmt.Println(faultyRecs, "items not fit for db insertion")
 }
 
 var ingrediensMutex sync.Mutex
 var methodMutex sync.Mutex
-//"1861e8efd7330b4d50bc444ff93e55c"
 
 //CollectRecipes collects recipes from a specifiec url
 func CollectRecipes(){
-	var recipes crawledRecipes = []crawledRecipe{}
+	var foundRecipes int
+	var recipes crawledRecipes = crawledRecipes{}
 	c := colly.NewCollector()
 	c.OnRequest(func (r *colly.Request){
 		fmt.Println("Visiting", r.URL.String())
@@ -80,9 +89,11 @@ func CollectRecipes(){
 		}
 	})
 	c.OnHTML(".recipe-main-info", func(el *colly.HTMLElement){
-		cr := crawledRecipe{Ingredients: []string{}, Method: []string{}}
+		foundRecipes++
+		cr := models.Recipe{Ingredients: []string{}, Method: []string{}}
+		cr.Source = "BBC"
 		cr.Title = el.ChildText("h1")
-		cr.Source = el.Request.URL.String()
+		cr.SourceURL = el.Request.URL.String()
 		el.ForEach(".recipe-ingredients__list-item", func(_ int, el *colly.HTMLElement){
 			ingrediensMutex.Lock()
 			cr.Ingredients = append(cr.Ingredients, el.Text)
@@ -106,6 +117,10 @@ func CollectRecipes(){
 				cr.Serves = s
 			}
 		}
+
+		cr.ImageURL = el.ChildAttr(".recipe-media__image img", "src")
+		
+
 		description := el.ChildText(".recipe-description__text")
 		if description != ""{
 			descriptionStringSlice := strings.Split(description, " ")
@@ -117,13 +132,11 @@ func CollectRecipes(){
 					for _, x := range calorieWordVariations{
 						if !isFirst{
 							if strings.Contains(descriptionStringSlice[i - 1], x){
-								fmt.Println("Contains!")
 								isKcal = true
 							}
 						}
 						if !isLast{
 							if strings.Contains(descriptionStringSlice[i + 1], x){
-								fmt.Println("Contains")
 								isKcal = true
 							}
 						}
@@ -131,7 +144,6 @@ func CollectRecipes(){
 					if isKcal{
 						cr.CalsProvided = true
 						cr.CalsPerServing = s
-						fmt.Println(cr.CalsPerServing, cr.CalsProvided)
 					}
 				}
 

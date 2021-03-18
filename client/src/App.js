@@ -1,26 +1,21 @@
 import Layout from "./Components/Layout";
-import {
-  BrowserRouter as Router,
-  Redirect,
-  Route,
-  Switch,
-} from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import Auth from "./Components/Pages/Auth/";
 import Landing from "./Components/Pages/Landing";
 import Main from "./Components/Pages/App/Index";
-import { useEffect, useState } from "react";
+import { /*useEffect,*/ useState } from "react";
 function App() {
   const [auth, setAuth] = useState({
     isAuthenticated: false,
     authInfo: { Key: "" },
   });
 
-  useEffect(() => {
-    const Key = localStorage.getItem("Key");
-    if (Key != null) {
-      setAuth({ isAuthenticated: true, authInfo: { Key } });
-    }
-  }, []);
+  // useEffect(() => {
+  //   const Key = localStorage.getItem("Key");
+  //   if (Key != null) {
+  //     setAuth({ isAuthenticated: true, authInfo: { Key } });
+  //   }
+  // }, []);
   return (
     <Router basename="/site">
       <Layout>
@@ -31,13 +26,7 @@ function App() {
           />
           <Route
             path="/app"
-            render={() =>
-              auth.isAuthenticated ? (
-                <Main setAuth={setAuth} auth={auth} />
-              ) : (
-                <Redirect to="/auth" />
-              )
-            }
+            render={() => <Main setAuth={setAuth} auth={auth} />}
           />
           <Route path="/" render={() => <Landing />} />
         </Switch>

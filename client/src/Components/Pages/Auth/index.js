@@ -1,8 +1,9 @@
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 import Login from "./Login";
 import Create from "./Create";
-import { Box, Grid, makeStyles, Typography } from "@material-ui/core";
+import { Box, Grid, makeStyles } from "@material-ui/core";
 import { useEffect, useState } from "react";
+import Logo from "../../Reusables/Logo";
 
 const useStyles = makeStyles((theme) => ({
   formContainer: {
@@ -55,16 +56,29 @@ function Auth({ auth, setAuth }) {
     localStorage.setItem("Key", data.Key);
     setAuth({ isAuthenticated: true, authInfo: { Key: data.Key } });
   };
+  const checkIfAuth = () => {
+    if (auth.isAuthenticated) {
+      return true;
+    }
+    const Key = localStorage.getItem("Key");
+    if (Key !== null) {
+      setAuth({ isAuthenticated: true, authInfo: { Key } });
+      return true;
+    }
+  };
+
   useEffect(() => {
-    if (auth.isAuthenticated) history.push("/app");
-  }, [auth.isAuthenticated, history]);
+    if (checkIfAuth()) {
+      history.push("/app/");
+    }
+    //eslint-disable-next-line
+  });
+
   return (
     <Grid container justify="space-evenly" className={classes.authContainer}>
-      <div className={classes.greenBox}></div>
-      <Box py={10} px={5}>
-        <Typography variant="h1" className={classes.authHeader}>
-          OK CHEF
-        </Typography>
+      <Box py={10}>
+        <Logo />
+        <Box pt={3} />
         <Switch basepath>
           <Route path={`${path}/create`}>
             <Create

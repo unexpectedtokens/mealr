@@ -25,7 +25,7 @@ func RunMigrations() error{
 	_, err = db.DBCon.Exec(string(file))
 	if err != nil {
 		logging.ErrorLogger(err)
-		return err
+		panic(err)
 	}
 	fmt.Println("[SUCCES]: Migrations ran succesfully")
 	return nil

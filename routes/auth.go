@@ -10,6 +10,7 @@ import (
 	"github.com/unexpectedtokens/mealr/auth"
 	db "github.com/unexpectedtokens/mealr/database"
 	"github.com/unexpectedtokens/mealr/logging"
+	"github.com/unexpectedtokens/mealr/middleware"
 	"github.com/unexpectedtokens/mealr/models"
 	"github.com/unexpectedtokens/mealr/util"
 )
@@ -66,7 +67,6 @@ func LoginView(w http.ResponseWriter, r *http.Request){
         http.Error(w, "", http.StatusBadRequest)
         return
 	}
-	fmt.Println(user.Username, user.Password)
 
 	var (
 		username string
@@ -116,7 +116,7 @@ func RefreshView(w http.ResponseWriter, r *http.Request, id interface{}){
 //ChangeUserView is a function to change the users password
 func ChangeUserView(w http.ResponseWriter, r *http.Request, id interface{}){
 	if !util.CheckIfMethodAllowed(w, r, []string{"PUT"}){
-		auth.ReturnBadRequest(w)
+		util.ReturnBadRequest(w)
 		return 
 	}
 	if user, err := auth.DecodeRequestBodyIntoUser(r); err == nil{
@@ -139,22 +139,22 @@ type SafeUserResponse struct {
 //GetUserView gets a user from the db and returns it
 func GetUserView(w http.ResponseWriter, r *http.Request){
 	if !util.CheckIfMethodAllowed(w, r, []string{"GET"}){
-		auth.ReturnBadRequest(w)
+		util.ReturnBadRequest(w)
 		return 
 	}
 	
-	if derivedID, ok := r.Context().Value(w).(models.UserID);ok{
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(models.UserID);ok{
 		user := models.UserModel{}
 		user.ID = derivedID
 		err := user.Retrieve()
 		if err != nil{
-			auth.ReturnBadRequest(w)
+			util.ReturnBadRequest(w)
 			return
 		}
 		res := SafeUserResponse{Username: user.Username, Email: user.Password}
 		jsonResponse, err := json.Marshal(res)
 		if err !=nil{
-			auth.ReturnBadRequest(w)
+			util.ReturnBadRequest(w)
 			return
 		}
 		w.Write(jsonResponse)

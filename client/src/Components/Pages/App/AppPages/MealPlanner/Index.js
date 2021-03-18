@@ -1,62 +1,59 @@
 import {
   Box,
-  CircularProgress,
+  Button,
   Fade,
-  Grid,
+  //makeStyles,
   Paper,
+  TextField,
   Typography,
 } from "@material-ui/core";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect } from "react";
 import config from "../../../../../Config/config";
 
-function MealPlanner({ auth }) {
-  const [plan, setPlan] = useState({});
-  const [loading] = useState(false);
+//const useStyles = makeStyles({});
 
-  const fetchMealPlan = useCallback(async () => {
+function MealPlanner({ auth }) {
+  // const [plan, setPlan] = useState({});
+  // const [loading, setLoading] = useState(false);
+  // const [configure, setConfigure] = useState(true);
+
+  const fetchMealPlan = async () => {
     const response = await fetch(`${config.API_URL}/api/mealplan/generate/`, {
       method: "GET",
       headers: {
         Authorization: auth.authInfo.Key,
       },
     });
+    console.log(response.status);
     const data = await response.json();
     console.log(data);
-    setPlan(data);
-  }, [auth.authInfo.Key]);
+  };
+
   useEffect(() => {
     fetchMealPlan();
-  }, [fetchMealPlan]);
+    //eslint-disable-next-line
+  }, []);
   return (
     <Fade in={true}>
-      <Paper elevation={1}>
-        <Box p={1}>
-          <Grid container>
-            {!loading ? (
-              <Box>
-                {Object.keys(plan).map((i) => {
-                  const day = plan[i];
-                  const Breakfast = day.Breakfast;
-                  // const Lunch = day.Lunch;
-                  // const dinner = day.Dinner;
-                  return (
-                    <Grid item>
-                      <Paper>
-                        {Object.keys(Breakfast).map((item) => {
-                          console.log(item, Breakfast[item]);
-                          return <Typography>{Breakfast.Label}</Typography>;
-                        })}
-                      </Paper>
-                    </Grid>
-                  );
-                })}
-              </Box>
-            ) : (
-              <CircularProgress size="1.5rem" />
-            )}
-          </Grid>
-        </Box>
-      </Paper>
+      <Box display="flex" justifyContent="flex-start">
+        <Paper elevation={1}>
+          <Box p={2}>
+            <Typography variant="h6">Mealplan options</Typography>
+            <Box p={2} pl={0}>
+              <TextField
+                type="number"
+                id="aom"
+                name="aom"
+                label="Amount of meals a day"
+              />
+            </Box>
+
+            <Button variant="contained" color="primary">
+              Generate mealplan
+            </Button>
+          </Box>
+        </Paper>
+      </Box>
     </Fade>
   );
 }

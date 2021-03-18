@@ -9,6 +9,7 @@ import {
   ListItemText,
   ListItem,
   Button,
+  Divider,
 } from "@material-ui/core";
 import {
   Home,
@@ -17,7 +18,8 @@ import {
   Settings,
   Fastfood,
 } from "@material-ui/icons";
-import Logo from "../../../assets/images/logo.png";
+import Logo from "../../Reusables/Logo";
+//import Logo from "../../../assets/images/logo.png";
 const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
@@ -27,6 +29,7 @@ const useStyles = makeStyles((theme) => ({
   },
   GreenBox: {
     backgroundColor: theme.palette.primary.main,
+    width: `calc(100% - ${drawerWidth}px)`,
   },
   drawerPaper: {
     width: drawerWidth,
@@ -62,6 +65,14 @@ const useStyles = makeStyles((theme) => ({
   activeListItemIcon: {
     color: theme.palette.primary.main,
   },
+  listItemIcon: {
+    fontSze: "1rem",
+  },
+  drawerHeader: {
+    color: theme.palette.primary.dark,
+    fontStyle: "italic",
+    fontWeight: "bold",
+  },
 }));
 
 function Layout({
@@ -69,19 +80,19 @@ function Layout({
   handleRouteChange,
   handleLogoutButtonPressed,
   children,
+  auth,
 }) {
   const classes = useStyles();
   return (
     <Box flexGrow={1} pl={`${drawerWidth}px`}>
       <Box
         position="absolute"
-        width="100%"
         color="primary"
         height="20%"
         zIndex={-1}
         className={classes.GreenBox}
         top={0}
-      ></Box>
+      />
       <Drawer
         className={classes.drawer}
         variant="permanent"
@@ -91,12 +102,14 @@ function Layout({
       >
         <Box
           p={2}
+          pt={4}
           display="flex"
           mb={2}
           alignItems="center"
           justifyContent="center"
         >
-          <img src={Logo} alt="logo" width="50" />
+          {/* <img src={Logo} alt="logo" width="50" /> */}
+          <Logo />
         </Box>
         <Grid
           container
@@ -122,11 +135,13 @@ function Layout({
                     }
                   >
                     <ListItemIcon
-                      className={active ? classes.activeListItemIcon : null}
+                      className={`${active ? classes.activeListItemIcon : ""} ${
+                        classes.ListItemIcon
+                      }`}
                     >
-                      {index === 0 ? <Home /> : null}
-                      {index === 1 ? <Schedule /> : null}
-                      {index === 2 ? <Fastfood /> : null}
+                      {index === 0 ? <Home fontSize="small" /> : null}
+                      {index === 1 ? <Schedule fontSize="small" /> : null}
+                      {index === 2 ? <Fastfood fontSize="small" /> : null}
                     </ListItemIcon>
                     <ListItemText
                       classes={{
@@ -140,6 +155,7 @@ function Layout({
                 );
               })}
             </List>
+            <Divider light />
             <List>
               {[
                 { url: "/profile", label: "My Profile" },
@@ -158,8 +174,8 @@ function Layout({
                     <ListItemIcon
                       className={active ? classes.activeListItemIcon : null}
                     >
-                      {index === 0 ? <Person /> : null}
-                      {index === 1 ? <Settings /> : null}
+                      {index === 0 ? <Person fontSize="small" /> : null}
+                      {index === 1 ? <Settings fontSize="small" /> : null}
                     </ListItemIcon>
                     <ListItemText
                       classes={{
@@ -183,7 +199,7 @@ function Layout({
           </Grid>
         </Grid>
       </Drawer>
-      <Container maxWidth="lg">
+      <Container maxWidth="md">
         <Box pt={20}>{children}</Box>
       </Container>
     </Box>

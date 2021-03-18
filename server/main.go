@@ -51,6 +51,8 @@ func handleRequests(){
 	http.HandleFunc("/api/profile/", applyMiddleware(routes.GetProfileView, middleware.AuthorizeMiddleware))
 	http.HandleFunc("/api/profile/update/", applyMiddleware(routes.UpdateProfileView, middleware.AuthorizeMiddleware))
 	http.HandleFunc("/api/profile/isvalid/", applyMiddleware(routes.ProfileValidForMealPlanGeneratorView, middleware.AuthorizeMiddleware))
+	http.HandleFunc("/api/recipes/list/", applyMiddleware(routes.AllRecipes))
+	http.HandleFunc("/api/recipes/detail/", applyMiddleware(routes.RecipeDetail))
 	http.HandleFunc("/site/", middleware.LoggingMiddleware(serveSPA))
 	buildHandler := http.FileServer(http.Dir("client/build"))
 	http.Handle("/", buildHandler)
@@ -72,7 +74,6 @@ func recipesExist() bool {
 //HTTPServer starts the server to receive requests on the specified port
 func HTTPServer(){
 	db.InitDB()
-	routes.PopulateRecipes(recipesExist())
 	defer db.DBCon.Close()
 	handleRequests()	
 }
