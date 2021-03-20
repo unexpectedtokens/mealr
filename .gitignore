@@ -1,3 +1,4 @@
 .env
 migrations/migrations.sql
 client/node_modules
+Log

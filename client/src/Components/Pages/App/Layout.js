@@ -80,7 +80,6 @@ function Layout({
   handleRouteChange,
   handleLogoutButtonPressed,
   children,
-  auth,
 }) {
   const classes = useStyles();
   return (

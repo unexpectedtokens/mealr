@@ -19,14 +19,20 @@ var excludeMutex sync.Mutex
 func returnRecipe(estCal int) error{
 	//fmt.Println("calories from returnrecipe", calories)
 	
-	stmt, err := db.DBCon.Prepare("SELECT id FROM recipes WHERE cals_provided AND cals_per_serving = $1;");
+	stmt, err := db.DBCon.Prepare(`WITH my_value (var) AS (
+	VALUES(500)
+	)SELECT id FROM recipes, my_value WHERE cals_provided AND cals_per_serving BETWEEN var - 100 AND var + 100;`);
 	if err != nil{
 		return err
 	}
-	err = stmt.QueryRow(estCal)
-
 	var recipe models.Recipe
+
+	err = stmt.QueryRow(estCal).Scan(&recipe)
+	if err !=nil{
+		return err
+	}
 	fmt.Println(recipe)
+	return nil
 }
 
 func generateDayPlan() []models.Recipe{

@@ -16,7 +16,7 @@ import { useFormik } from "formik";
 import { useCallback, useEffect, useState } from "react";
 import config from "../../../../../Config/config";
 
-function Profile({ auth }) {
+function Profile({ auth, validForMG, checkValidForMG }) {
   const [profile, setProfile] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -41,7 +41,7 @@ function Profile({ auth }) {
         const response = await fetch(`${config.API_URL}/api/profile/update/`, {
           method: "PUT",
           headers: {
-            Authorization: auth.authInfo.Key,
+            Authorization: auth.Key,
           },
           body: JSON.stringify(data),
         });
@@ -69,23 +69,23 @@ function Profile({ auth }) {
   };
 
   const fetchProfile = useCallback(async () => {
-    if (auth.authInfo.Key !== "") {
+    if (auth.Key !== "") {
       setProfileLoaded(false);
       const response = await fetch(`${config.API_URL}/api/profile/`, {
         method: "GET",
         headers: {
-          Authorization: auth.authInfo.Key,
+          Authorization: auth.Key,
         },
       });
       const data = await response.json();
       console.log(data);
       setProfile(data);
       updateFieldsBasedOnProfile(data);
-
+      checkValidForMG(auth.Key);
       setProfileLoaded(true);
     }
     //eslint-disable-next-line
-  }, [auth.authInfo.Key]);
+  }, [auth.Key]);
 
   const fetchActivityOptions = useCallback(async () => {
     console.log("fetching activity options");
@@ -134,6 +134,16 @@ function Profile({ auth }) {
                 alignItems="flex-start"
               >
                 <Typography variant="h4">Profile</Typography>
+                {validForMG ? (
+                  <Typography color="primary">
+                    Your profile is ready for mealplan generation
+                  </Typography>
+                ) : (
+                  <Typography>
+                    You need to fill in some extra things in order for
+                    mealgeneration to work
+                  </Typography>
+                )}
                 <Box p={2} pl={0}>
                   <TextField
                     value={Form.values.height}

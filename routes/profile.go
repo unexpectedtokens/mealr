@@ -82,6 +82,7 @@ type validProfileResponse struct {
 //ProfileValidForMealPlanGeneratorView checks if the profile in question is valid for mealplan generation. If not the frontend can act accordingly
 func ProfileValidForMealPlanGeneratorView(w http.ResponseWriter, r *http.Request){
 	if !util.CheckIfMethodAllowed(w, r, []string{"GET"}){
+		util.ReturnBadRequest(w)
 		return
 	}
 	if derivedID, ok := r.Context().Value(middleware.ContextKey).(models.UserID);ok{
@@ -93,11 +94,12 @@ func ProfileValidForMealPlanGeneratorView(w http.ResponseWriter, r *http.Request
 		}
 		if !profile.Validate(){
 			res.Valid = false
-		} 
+		}
 		jsonResponse, err := json.Marshal(res)
-			if err !=nil{
-				util.ReturnBadRequest(w)
-			}
-			w.Write(jsonResponse)
+		if err !=nil{
+			util.ReturnBadRequest(w)
+			return
+		}
+		w.Write(jsonResponse)
 	}
 }

@@ -7,7 +7,7 @@ import { /*useEffect,*/ useState } from "react";
 function App() {
   const [auth, setAuth] = useState({
     isAuthenticated: false,
-    authInfo: { Key: "" },
+    Key: "",
   });
 
   // useEffect(() => {

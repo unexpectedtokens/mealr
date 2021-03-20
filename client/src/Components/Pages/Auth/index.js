@@ -54,7 +54,7 @@ function Auth({ auth, setAuth }) {
   const history = useHistory();
   const onAuthenticate = (data) => {
     localStorage.setItem("Key", data.Key);
-    setAuth({ isAuthenticated: true, authInfo: { Key: data.Key } });
+    setAuth({ isAuthenticated: true, Key: data.Key });
   };
   const checkIfAuth = () => {
     if (auth.isAuthenticated) {
@@ -62,7 +62,7 @@ function Auth({ auth, setAuth }) {
     }
     const Key = localStorage.getItem("Key");
     if (Key !== null) {
-      setAuth({ isAuthenticated: true, authInfo: { Key } });
+      setAuth({ isAuthenticated: true, Key });
       return true;
     }
   };

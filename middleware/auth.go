@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -23,7 +24,16 @@ func AuthorizeMiddleware(next http.HandlerFunc) http.HandlerFunc{
 			return
 		}	
 		token := auth.ParseToken(r.Header["Authorization"][0])
+		if (token == nil) {
+			auth.ReturnUnauthorized(w)
+			return
+		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok{
+			err := claims.Valid()
+			if err != nil{
+				fmt.Println("claims not valid")
+			}
+			
 
 			var tm time.Time
     		switch exp := claims["exp"].(type) {
@@ -40,10 +50,15 @@ func AuthorizeMiddleware(next http.HandlerFunc) http.HandlerFunc{
 					next.ServeHTTP(w, r.WithContext(ctx))
 				}else{
 					auth.ReturnUnauthorized(w)
+					return
 				}
 			}else{
 				auth.ReturnUnauthorized(w)
+				return
 			}
+		} else {
+			auth.ReturnUnauthorized(w)
+			return
 		}
 		// if err != nil{
 		// 	http.Error(w, "unauthorized", http.StatusUnauthorized)
