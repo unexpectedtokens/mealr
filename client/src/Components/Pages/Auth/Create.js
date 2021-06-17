@@ -8,6 +8,8 @@ import {
 } from "@material-ui/core";
 import config from "../../../Config/config";
 import { ChevronRight } from "@material-ui/icons";
+import { useSnackbar } from "notistack";
+import { Helmet } from "react-helmet";
 
 const validateCredentials = (credentials) => {
   const creds = { ...credentials };
@@ -38,6 +40,7 @@ const validateCredentials = (credentials) => {
 };
 
 function Create({ classes, loading, setLoading, onAuthenticate }) {
+  const { enqueueSnackbar } = useSnackbar();
   const [valid, setValid] = useState(false);
   const [credentials, setCredentials] = useState({
     email: {
@@ -95,6 +98,7 @@ function Create({ classes, loading, setLoading, onAuthenticate }) {
           setLoading(false);
         } else if (response.status === 302) {
           const data = await response.text();
+
           const ae = data.split(" ")[0];
           const newCredentials = { ...credentials };
           newCredentials[ae] = {
@@ -103,9 +107,17 @@ function Create({ classes, loading, setLoading, onAuthenticate }) {
           };
           setCredentials(newCredentials);
           setLoading(false);
+        } else if (response.status === 400) {
+          enqueueSnackbar("Sign up form is incomplete or incorrect", {
+            variant: "error",
+          });
+          setLoading(false);
         }
       } catch (e) {
-        console.log(e.status);
+        enqueueSnackbar("Something went wrong, please try again", {
+          variant: "error",
+          autoHideDuration: 3000,
+        });
         setLoading(false);
       }
     }
@@ -127,55 +139,60 @@ function Create({ classes, loading, setLoading, onAuthenticate }) {
   }, [credentials]);
 
   return (
-    <form
-      onSubmit={onSubmit}
-      method="POST"
-      className={classes.form}
-      noValidate
-      autoComplete="off"
-      key="1"
-    >
-      <Typography variant="h6">Create an account to continue</Typography>
-      {Object.keys(credentials).map((item) => {
-        return (
-          <TextField
-            key={item}
-            type={credentials[item].type}
-            value={credentials[item].value}
-            fullWidth
-            id={item}
-            variant="filled"
-            label={credentials[item].label}
+    <>
+      <Helmet>
+        <title>Register</title>
+      </Helmet>
+      <form
+        onSubmit={onSubmit}
+        method="POST"
+        className={classes.form}
+        noValidate
+        autoComplete="off"
+        key="1"
+      >
+        <Typography variant="h6">Create an account to continue</Typography>
+        {Object.keys(credentials).map((item) => {
+          return (
+            <TextField
+              key={item}
+              type={credentials[item].type}
+              value={credentials[item].value}
+              fullWidth
+              id={item}
+              variant="filled"
+              label={credentials[item].label}
+              margin="normal"
+              onChange={onChangeCredentials}
+              autoFocus={credentials[item].type === "email"}
+              disabled={loading}
+              error={credentials[item].error.ex}
+              helperText={credentials[item].error.text}
+            />
+          );
+        })}
+        <div className={classes.buttonContainer}>
+          <Button
             margin="normal"
-            onChange={onChangeCredentials}
-            autoFocus={credentials[item].type === "email"}
-            disabled={loading}
-            error={credentials[item].error.ex}
-            helperText={credentials[item].error.text}
-          />
-        );
-      })}
-      <div className={classes.buttonContainer}>
-        <Button
-          margin="normal"
-          onClick={onSubmit}
-          variant="contained"
-          color="primary"
-          fullWidth
-          className={classes.submit}
-          endIcon={!loading ? <ChevronRight /> : null}
-        >
-          {loading ? (
-            <CircularProgress size="1.5rem" color="secondary" />
-          ) : (
-            "Create Account"
-          )}
-        </Button>
-        <Button size="small" onClick={() => history.replace(`/auth`)}>
-          Log in to existing account
-        </Button>
-      </div>
-    </form>
+            onClick={onSubmit}
+            variant="contained"
+            color="primary"
+            fullWidth
+            className={classes.submit}
+            endIcon={!loading ? <ChevronRight /> : null}
+          >
+            {loading ? (
+              <CircularProgress size="1.5rem" color="white" />
+            ) : (
+              "Create Account"
+            )}
+          </Button>
+          <Button size="small" onClick={() => history.replace(`/auth`)}>
+            Log in to existing account
+          </Button>
+        </div>
+      </form>
+    </>
   );
 }
 

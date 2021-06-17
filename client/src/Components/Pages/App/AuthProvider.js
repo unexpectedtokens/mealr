@@ -1,0 +1,1 @@
+function AuthProvider({ children }) {}

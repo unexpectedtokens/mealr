@@ -1,77 +1,102 @@
 import {
   Box,
-  Container,
   Grid,
   makeStyles,
-  Drawer,
-  List,
-  ListItemIcon,
-  ListItemText,
-  ListItem,
   Button,
-  Divider,
+  useTheme,
+  useMediaQuery,
+  Toolbar,
+  IconButton,
+  Typography,
 } from "@material-ui/core";
+import { useState } from "react";
 import {
-  Home,
-  PersonRounded as Person,
-  Schedule,
-  Settings,
-  Fastfood,
+  HomeOutlined,
+  ScheduleOutlined,
+  ExitToAppOutlined,
+  FastfoodOutlined,
+  AccountCircleOutlined,
+  Close,
+  InfoOutlined,
+  MenuOutlined,
+  ChevronLeftOutlined,
 } from "@material-ui/icons";
 import Logo from "../../Reusables/Logo";
-//import Logo from "../../../assets/images/logo.png";
-const drawerWidth = 240;
 
 const useStyles = makeStyles((theme) => ({
-  drawer: {
-    width: drawerWidth,
-    flexShrink: 0,
-  },
-  GreenBox: {
-    backgroundColor: theme.palette.primary.main,
-    width: `calc(100% - ${drawerWidth}px)`,
-  },
-  drawerPaper: {
-    width: drawerWidth,
-    border: "none",
-  },
-  drawerContainer: {
-    overflow: "auto",
-  },
-  content: {
-    flexGrow: 1,
-    padding: theme.spacing(3),
-  },
-  listItem: {
-    backgroundColor: "#fff",
-    borderRight: `2px solid #fff`,
-    "&:hover": {
-      backgroundColor: "#eee",
+  "@keyframes navbutSlideIn": {
+    "0%": {
+      opacity: 0,
+      transform: "translateY(-50%)",
+    },
+    "100%": {
+      opacity: 1,
+      transform: "translateY(0)",
     },
   },
-  listItemText: {
-    fontWeight: theme.typography.fontWeightMedium,
-    fontSize: "1rem",
-    transition: theme.transitions.easing.easeIn,
+  MainContainer: {
+    width: "100%",
+    minHeight: "100vh",
+    backgroundColor: theme.palette.primary.contrastText,
+    maxWidth: theme.breakpoints.values.xl,
+    [theme.breakpoints.up("lg")]: {
+      boxShadow: theme.shadows[3],
+      overflow: "hidden",
+      borderRadius: theme.shape.borderRadius,
+    },
   },
-  activeListItemText: {
-    fontWeight: theme.typography.fontWeightMedium,
-    fontSize: "1rem",
-    color: theme.palette.primary.main,
+  Nav: {
+    backgroundColor: theme.palette.primary.contrastText,
+    height: "100%",
+    padding: "2rem 1rem",
   },
-  activeListItem: {
-    borderRight: `4px solid ${theme.palette.primary.main}`,
+  DrawerGridItem: {
+    zIndex: 1000,
+    borderRight: "1px solid #eee",
+    [theme.breakpoints.down("sm")]: {
+      position: "absolute",
+      height: "100%",
+      width: "100vw",
+    },
   },
-  activeListItemIcon: {
-    color: theme.palette.primary.main,
+  MainScreenNav: {
+    width: "100%",
+    display: "flex",
+    borderBottom: "1px solid #eee",
+    backgroundColor: "#fff",
+    position: "absolute",
+    padding: "2rem 1rem",
+    top: 0,
+    left: 0,
+    "& > div": {
+      flexGrow: 1,
+      display: "flex",
+      justifyContent: "center",
+    },
   },
-  listItemIcon: {
-    fontSze: "1rem",
+  NavOpen: {
+    right: 0,
   },
-  drawerHeader: {
-    color: theme.palette.primary.dark,
-    fontStyle: "italic",
-    fontWeight: "bold",
+  NavClosed: {
+    right: "100%",
+  },
+  MenuOpenButton: {
+    [theme.breakpoints.up("md")]: {
+      display: "none",
+    },
+  },
+  SiteBody: {
+    background: `linear-gradient(to bottom right, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+    [theme.breakpoints.up("lg")]: {
+      padding: theme.spacing(2),
+    },
+    display: "flex",
+    justifyContent: "center",
+  },
+  NavButton: {
+    marginBottom: theme.spacing(3),
+    fontWeight: 500,
+    animation: `$navbutSlideIn .5s ${theme.transitions.easing.easeIn}`,
   },
 }));
 
@@ -80,127 +105,157 @@ function Layout({
   handleRouteChange,
   handleLogoutButtonPressed,
   children,
+  goBack,
+  userInfo,
 }) {
+  const [sideNavOpen, setSideNavOpen] = useState(false);
+  const theme = useTheme();
+  const smallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const classes = useStyles();
   return (
-    <Box flexGrow={1} pl={`${drawerWidth}px`}>
-      <Box
-        position="absolute"
-        color="primary"
-        height="20%"
-        zIndex={-1}
-        className={classes.GreenBox}
-        top={0}
-      />
-      <Drawer
-        className={classes.drawer}
-        variant="permanent"
-        classes={{
-          paper: classes.drawerPaper,
-        }}
-      >
-        <Box
-          p={2}
-          pt={4}
-          display="flex"
-          mb={2}
-          alignItems="center"
-          justifyContent="center"
-        >
-          {/* <img src={Logo} alt="logo" width="50" /> */}
-          <Logo />
-        </Box>
+    <Box className={classes.SiteBody}>
+      <Grid container className={classes.MainContainer}>
         <Grid
-          container
-          direction="column"
-          justify="space-between"
-          alignItems="stretch"
+          item
+          xl={2}
+          lg={2}
+          md={3}
+          style={{
+            right: smallScreen && sideNavOpen ? 0 : "100%",
+          }}
+          className={classes.DrawerGridItem}
         >
-          <Grid item xs={12}>
-            <List>
-              {[
-                { url: "/", label: "Home" },
-                { url: "/planner", label: "Meal Planner" },
-                { url: "/recipes", label: "Recipes" },
-              ].map((link, index) => {
-                const active = link.url === appRoute;
-                return (
-                  <ListItem
-                    button
-                    key={link.label}
-                    onClick={() => handleRouteChange(link.url)}
-                    className={
-                      active ? classes.activeListItem : classes.ListItem
-                    }
-                  >
-                    <ListItemIcon
-                      className={`${active ? classes.activeListItemIcon : ""} ${
-                        classes.ListItemIcon
-                      }`}
-                    >
-                      {index === 0 ? <Home fontSize="small" /> : null}
-                      {index === 1 ? <Schedule fontSize="small" /> : null}
-                      {index === 2 ? <Fastfood fontSize="small" /> : null}
-                    </ListItemIcon>
-                    <ListItemText
-                      classes={{
-                        primary: active
-                          ? classes.activeListItemText
-                          : classes.listItemText,
-                      }}
-                      primary={link.label}
-                    />
-                  </ListItem>
-                );
-              })}
-            </List>
-            <Divider light />
-            <List>
-              {[
-                { url: "/profile", label: "My Profile" },
-                { url: "/settings", label: "Settings" },
-              ].map((link, index) => {
-                const active = link.url === appRoute;
-                return (
-                  <ListItem
-                    button
-                    key={link.label}
-                    onClick={() => handleRouteChange(link.url)}
-                    className={
-                      active ? classes.activeListItem : classes.ListItem
-                    }
-                  >
-                    <ListItemIcon
-                      className={active ? classes.activeListItemIcon : null}
-                    >
-                      {index === 0 ? <Person fontSize="small" /> : null}
-                      {index === 1 ? <Settings fontSize="small" /> : null}
-                    </ListItemIcon>
-                    <ListItemText
-                      classes={{
-                        primary: active
-                          ? classes.activeListItemText
-                          : classes.listItemText,
-                      }}
-                      primary={link.label}
-                    />
-                  </ListItem>
-                );
-              })}
-            </List>
-          </Grid>
-          <Grid item>
-            <Box p={5}>
-              <Button fullWidth onClick={handleLogoutButtonPressed}>
-                Log out
-              </Button>
+          <Box display="flex" flexDirection="column" className={classes.Nav}>
+            <Box
+              display="flex"
+              justifyContent={smallScreen ? "space-between" : "center"}
+              alignItems="center"
+            >
+              {smallScreen ? (
+                <IconButton onClick={() => setSideNavOpen(false)}>
+                  <Close />
+                </IconButton>
+              ) : null}
+              <Box pr={smallScreen ? 5 : 0}>
+                <Logo
+                  dark
+                  orientation={smallScreen ? "vertical" : "horizontal"}
+                />
+              </Box>
+              {smallScreen ? <Box> </Box> : null}
             </Box>
-          </Grid>
+
+            <Box
+              display="flex"
+              flexDirection="column"
+              mt={10}
+              flexGrow={1}
+              alignSelf="stretch"
+            >
+              {[
+                {
+                  url: "/",
+                  label: "Home",
+                  activeHook: "home",
+                  startIcon: <HomeOutlined />,
+                },
+                {
+                  url: "/planner",
+                  label: "Meal Planner",
+                  activeHook: "meal planner",
+                  startIcon: <ScheduleOutlined />,
+                },
+                {
+                  url: "/recipes",
+                  label: "Recipes",
+                  activeHook: "recipes",
+                  startIcon: <FastfoodOutlined />,
+                },
+                {
+                  url: "/profile",
+                  label: "My Profile",
+                  activeHook: "profile",
+                  startIcon: <AccountCircleOutlined />,
+                },
+                {
+                  url: "/about",
+                  label: "About This App",
+                  activeHook: "about",
+                  startIcon: <InfoOutlined />,
+                },
+              ].map((link, index) => {
+                const active = link.activeHook === appRoute;
+                return (
+                  <Button
+                    key={index * 2}
+                    size="large"
+                    fullWidth
+                    variant={active ? "contained" : "text"}
+                    color={active ? "primary" : "default"}
+                    className={classes.NavButton}
+                    startIcon={link.startIcon}
+                    disableElevation
+                    onClick={() => {
+                      handleRouteChange(link.url, link.activeHook);
+                      if (smallScreen) setSideNavOpen(false);
+                    }}
+                  >
+                    {link.label}
+                  </Button>
+                );
+              })}
+            </Box>
+            <Box pb={2}>
+              <Typography align="center">
+                Logged in as{" "}
+                <Typography component="span" color="primary">
+                  {userInfo.username}
+                </Typography>
+              </Typography>
+            </Box>
+            <Button
+              onClick={handleLogoutButtonPressed}
+              startIcon={<ExitToAppOutlined />}
+            >
+              Log out
+            </Button>
+          </Box>
         </Grid>
-      </Drawer>
-      <Container maxWidth="md">
-        <Box pt={20}>{children}</Box>
-      </Container>
+        <Grid item xl={10} lg={10} md={9} sm={12} xs={12}>
+          <Box
+            pt={20}
+            px={smallScreen ? 1 : 2}
+            pb={smallScreen ? 1 : 2}
+            position="relative"
+          >
+            <Toolbar className={classes.MainScreenNav}>
+              <IconButton
+                className={classes.MenuOpenButton}
+                onClick={() => setSideNavOpen((cur) => !cur)}
+              >
+                <MenuOutlined />
+              </IconButton>
+              {!smallScreen ? (
+                <IconButton onClick={goBack}>
+                  <ChevronLeftOutlined />
+                </IconButton>
+              ) : null}
+
+              {smallScreen ? (
+                <div>
+                  <Logo dark orientation="horizontal" />
+
+                  {/* <Typography variant="h6">
+                    {appRoute[0].toUpperCase() +
+                      appRoute.slice(1, appRoute.length)}
+                  </Typography> */}
+                </div>
+              ) : null}
+            </Toolbar>
+            {children}
+          </Box>
+        </Grid>
+      </Grid>
     </Box>
   );
 }

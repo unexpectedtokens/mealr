@@ -24,7 +24,7 @@ func RunMigrations() error{
 	}
 	_, err = db.DBCon.Exec(string(file))
 	if err != nil {
-		logging.ErrorLogger(err)
+		logging.ErrorLogger(err, "migrations/main.go", "RunMigrations")
 		panic(err)
 	}
 	fmt.Println("[SUCCES]: Migrations ran succesfully")
@@ -33,7 +33,7 @@ func RunMigrations() error{
 
 //Flush deletes all tables from postgres
 func Flush(){
-	query := "DROP TABLE users CASCADE; DROP TABLE profiles; DROP TABLE jwt_auth; DROP TABLE recipes CASCADE; DROP TABLE ingredients_from_recipe; DROP TABLE methods_from_recipe;"
+	query := "DROP TABLE users CASCADE; DROP TABLE profiles; DROP TABLE jwt_auth; DROP TABLE recipes CASCADE; DROP TABLE ingredients_from_recipe; DROP TABLE methods_from_recipe; DROP TABLE food_ingredient CASCADE; DROP TABLE ingredients_from_foodingredient_from_recipe;"
 	db.InitDB()
 	defer db.DBCon.Close()
 	_, err := db.DBCon.Exec(query)

@@ -13,11 +13,11 @@ function PNC({ navigate, show }) {
     <Grow in={show}>
       <Card>
         <Box p={2}>
-          <CardContent>
+          <CardContent style={{ padding: 8 }}>
             <Typography
-              variant="h6"
+              variant="h5"
               color="primary"
-              style={{ fontWeight: "bold" }}
+              style={{ fontWeight: 500 }}
             >
               Your profile is not complete.
             </Typography>
@@ -31,7 +31,7 @@ function PNC({ navigate, show }) {
               variant="contained"
               color="primary"
               style={{ fontWeight: "bold" }}
-              onClick={() => navigate("/profile")}
+              onClick={() => navigate("/profile/edit")}
             >
               Complete Profile
             </Button>

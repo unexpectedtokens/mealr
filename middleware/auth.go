@@ -3,13 +3,12 @@ package middleware
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/unexpectedtokens/mealr/auth"
-	"github.com/unexpectedtokens/mealr/models"
+	"github.com/unexpectedtokens/mealr/tokens"
 )
 
 type contextKey string
@@ -23,18 +22,17 @@ func AuthorizeMiddleware(next http.HandlerFunc) http.HandlerFunc{
 			auth.ReturnUnauthorized(w)
 			return
 		}	
-		token := auth.ParseToken(r.Header["Authorization"][0])
-		if (token == nil) {
+		token, err := tokens.ParseToken(r.Header["Authorization"][0])
+		if (err != nil) {
 			auth.ReturnUnauthorized(w)
 			return
 		}
 		if claims, ok := token.Claims.(jwt.MapClaims); ok{
 			err := claims.Valid()
 			if err != nil{
-				fmt.Println("claims not valid")
+				auth.ReturnUnauthorized(w)
+				return
 			}
-			
-
 			var tm time.Time
     		switch exp := claims["exp"].(type) {
     		case float64:
@@ -45,8 +43,8 @@ func AuthorizeMiddleware(next http.HandlerFunc) http.HandlerFunc{
     		}
 
 			if UID, ok := claims["uid"].(float64); ok{
-				if auth.CheckIfNotExpired(tm){
-					ctx := context.WithValue(r.Context(), ContextKey, models.UserID(int64(UID)))
+				if tokens.CheckIfNotExpired(tm){
+					ctx := context.WithValue(r.Context(), ContextKey, auth.UserID(int64(UID)))
 					next.ServeHTTP(w, r.WithContext(ctx))
 				}else{
 					auth.ReturnUnauthorized(w)
@@ -60,12 +58,5 @@ func AuthorizeMiddleware(next http.HandlerFunc) http.HandlerFunc{
 			auth.ReturnUnauthorized(w)
 			return
 		}
-		// if err != nil{
-		// 	http.Error(w, "unauthorized", http.StatusUnauthorized)
-		// }
-		//else{
-		// 		http.Error(w,"unauthorized", http.StatusUnauthorized)
-		// 	}
-		// }
 	}
 }

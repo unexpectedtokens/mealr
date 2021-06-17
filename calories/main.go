@@ -3,7 +3,7 @@ package calories
 import (
 	"time"
 
-	"github.com/unexpectedtokens/mealr/models"
+	"github.com/unexpectedtokens/mealr/profiles"
 )
 
 //BMR is the basal metabolic rate. The amount of calories a person would burn in a day if inactive for that entire day.
@@ -30,7 +30,7 @@ func calculateTDEE(bmr float64, act string) int{
 }
 
 //CalculateNeededCalories calculates the basal metabolic rate
-func CalculateNeededCalories(p models.Profile) (int, error){
+func CalculateNeededCalories(p profiles.Profile) (int, error){
 	// For men:
 	// BMR = 10W + 6.25H - 5A + 5
 	// For women:

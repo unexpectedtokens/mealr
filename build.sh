@@ -7,5 +7,12 @@ rm -rf node_modules
 #moves back into the main directory and compiles the golang backend to binary
 cd ..
 go build cmd/main.go
-#runs the binary file which will setup a database connection and a http server listener
-./main
+docker build -t lembas .
+
+
+
+
+
+# app -------> server
+# server -------> app een token
+# app refresh please my token

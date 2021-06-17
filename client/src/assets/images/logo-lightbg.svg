@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="147" height="41" viewBox="0 0 147 41">
+  <g id="Group_24" data-name="Group 24" transform="translate(-528 -2920)">
+    <text id="Lem" transform="translate(572 2948)" fill="#49814c" font-size="28" font-family="HelveticaNeue, Helvetica Neue"><tspan x="0" y="0">Lem</tspan></text>
+    <text id="Bas" transform="translate(626 2948)" fill="#212121" font-size="28" font-family="HelveticaNeue, Helvetica Neue"><tspan x="0" y="0">Bas</tspan></text>
+    <g id="Ellipse_11" data-name="Ellipse 11" transform="translate(528 2920)" fill="#49814c" stroke="#49814c" stroke-width="5">
+      <circle cx="20.5" cy="20.5" r="20.5" stroke="none"/>
+      <circle cx="20.5" cy="20.5" r="18" fill="none"/>
+    </g>
+    <path id="Icon_ionic-ios-leaf" data-name="Icon ionic-ios-leaf" d="M34.032,14.739C26,9.1,13.784,13.194,4.27,4.615c-2.216-2-.929,22.45,10.98,31.716,8.708,6.768,18.961,4.69,21.771,3.584A6.138,6.138,0,0,0,40.4,36.683h0c.241.025-.9-3.333,2.175-4.659C44.121,31.542,40.066,18.981,34.032,14.739Zm4.5,20.467c-8.7-2.221-16.264-7.722-21.166-12.03-.4-.353.179-.877.616-.572A71.939,71.939,0,0,0,39.618,32.889,3.3,3.3,0,0,1,38.532,35.206Z" transform="translate(526.328 2916.501)" fill="#fff"/>
+  </g>
+</svg>

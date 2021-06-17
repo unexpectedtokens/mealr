@@ -8,7 +8,7 @@ import (
 	"github.com/unexpectedtokens/mealr/auth"
 	"github.com/unexpectedtokens/mealr/calories"
 	"github.com/unexpectedtokens/mealr/middleware"
-	"github.com/unexpectedtokens/mealr/models"
+	"github.com/unexpectedtokens/mealr/profiles"
 	"github.com/unexpectedtokens/mealr/util"
 )
 
@@ -18,9 +18,9 @@ func UpdateProfileView(w http.ResponseWriter, r *http.Request){
 	if !util.CheckIfMethodAllowed(w, r, []string{"PUT", "UPDATE"}){
 		return
 	}
-	if derivedID, ok := r.Context().Value(middleware.ContextKey).(models.UserID); ok{
-		newProfile := models.Profile{}
-		profile := models.Profile{}
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		newProfile := profiles.Profile{}
+		profile := profiles.Profile{}
 		profile.UserID = derivedID
 		err := profile.Retrieve()
 		if err != nil{
@@ -45,16 +45,17 @@ func UpdateProfileView(w http.ResponseWriter, r *http.Request){
 }
 //GetProfileView gets a profile based on the id passed in the JWT
 func GetProfileView(w http.ResponseWriter, r *http.Request){
-	if derivedID, ok := r.Context().Value(middleware.ContextKey).(models.UserID);ok{
-		profile := models.Profile{UserID: derivedID}
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID);ok{
+		profile := profiles.Profile{UserID: derivedID}
 		err := profile.Retrieve()
 		if err != nil{
+			fmt.Println(err)
 			util.ReturnBadRequest(w)
 			return
 		}
-
 		res, err := json.Marshal(profile)
 		if err !=nil{
+			fmt.Println(err)
 			util.ReturnBadRequest(w)
 			return
 		}
@@ -85,8 +86,8 @@ func ProfileValidForMealPlanGeneratorView(w http.ResponseWriter, r *http.Request
 		util.ReturnBadRequest(w)
 		return
 	}
-	if derivedID, ok := r.Context().Value(middleware.ContextKey).(models.UserID);ok{
-		profile := models.Profile{}
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID);ok{
+		profile := profiles.Profile{}
 		profile.UserID = derivedID
 		profile.Retrieve()
 		res := validProfileResponse{

@@ -1,53 +1,114 @@
 package routes
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 
+	"github.com/unexpectedtokens/mealr/auth"
 	"github.com/unexpectedtokens/mealr/calories"
 	db "github.com/unexpectedtokens/mealr/database"
+	"github.com/unexpectedtokens/mealr/logging"
 	"github.com/unexpectedtokens/mealr/middleware"
-	"github.com/unexpectedtokens/mealr/models"
+	"github.com/unexpectedtokens/mealr/profiles"
+	"github.com/unexpectedtokens/mealr/recipes"
 	"github.com/unexpectedtokens/mealr/util"
 )
 
 //
 
-var excludeMutex sync.Mutex
-func returnRecipe(estCal int) error{
-	//fmt.Println("calories from returnrecipe", calories)
-	
-	stmt, err := db.DBCon.Prepare(`WITH my_value (var) AS (
-	VALUES(500)
-	)SELECT id FROM recipes, my_value WHERE cals_provided AND cals_per_serving BETWEEN var - 100 AND var + 100;`);
-	if err != nil{
-		return err
-	}
-	var recipe models.Recipe
+var caloricMismatchAllowed = 350
 
-	err = stmt.QueryRow(estCal).Scan(&recipe)
-	if err !=nil{
-		return err
-	}
-	fmt.Println(recipe)
+
+func saveMPToDB(mp recipes.Mealplan) error{
+	db.DBCon.Prepare("INSERT INTO")
+
+
 	return nil
 }
 
-func generateDayPlan() []models.Recipe{
-
-	return []models.Recipe{}
+type dayInPlanWithError struct {
+	Day recipes.DayInPlan
+	Err error
 }
+
+var placeHolderPlan recipes.Mealplan
+
+var excludeMutex sync.Mutex
+
+func returnRecipes(estCal int, toExclude *[]int64) (allRecipeResponseList, error){
+	
+	var excludePartial string
+	values := []interface{}{}
+	excludeMutex.Lock()
+	if len(*toExclude) > 0{
+		fmt.Println("implementing to exclude func", toExclude)
+		excludePartial += " AND id NOT IN ("	
+		for i, x := range *toExclude{
+			values = append(values, x)
+			excludePartial += fmt.Sprintf("$%d,", i + 1)
+		}
+		excludePartial = excludePartial[0:len(excludePartial)-1] + ")"
+	}
+	excludeMutex.Unlock()
+	
+	queryString := fmt.Sprintf("WITH my_value (var1, var2) AS (VALUES(%d, %d)) SELECT id, title, source, image_url FROM recipes, my_value WHERE cals_provided AND cals_per_serving BETWEEN var1 - var2 AND var1 + var2%s;", estCal, caloricMismatchAllowed, excludePartial)
+	fmt.Println(queryString)
+	stmt, err := db.DBCon.Prepare(queryString);
+	if err != nil{
+		fmt.Println("query error", err)
+		return allRecipeResponseList{}, err
+	}
+	
+
+	rows, err := stmt.Query(values...)
+	//.Scan(&recipe.ID, &recipe.Title, &recipe.Source, &recipe.ImageURL)
+	if err !=nil{
+		return allRecipeResponseList{}, err
+	}
+	defer rows.Close()
+	recipesList := allRecipeResponseList{}
+	for rows.Next(){
+		var recipe recipes.AllRecipeData
+		rows.Scan(&recipe.ID, &recipe.Title, &recipe.Source, &recipe.ImageURL)
+		recipesList = append(recipesList, recipe)
+	}
+	excludeMutex.Lock()
+	for _, x:=range recipesList{
+		*toExclude = append(*toExclude, x.ID)
+	}
+	excludeMutex.Unlock()
+	return recipesList, nil
+}
+
+
+func generateDayPlan(nc, meals, order int, toExclude *[]int64, weekDay string, dayPlanChan chan dayInPlanWithError) {
+	retVal := dayInPlanWithError{}
+	dayPlan := recipes.DayInPlan{Order: order, DayOfWeek: weekDay}
+	recipesList, err := returnRecipes(nc / meals, toExclude)
+	if err !=nil{
+		retVal.Err = err
+		fmt.Println(err)
+		dayPlanChan <- retVal
+		return
+	}
+	dayPlan.Recipes = recipesList
+	retVal.Day = dayPlan
+	fmt.Println("to Excldude on day", order, ": ", *toExclude)
+	dayPlanChan <- retVal
+}
+
+
 
 var generateMutex sync.Mutex
 //GeneratePlanView is a view that returns a recipe back te the requester
 func GeneratePlanView (w http.ResponseWriter, r *http.Request){
-	// now := time.Now()
-	if derivedID, ok := r.Context().Value(middleware.ContextKey).(models.UserID); ok{
-		
-		profile := models.Profile{UserID: derivedID}
-		
+	placeHolderPlan = recipes.Mealplan{}
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		profile := profiles.Profile{UserID: derivedID}
 		profile.Retrieve()
 		if profile.Validate(){
 			mealsQuery, ok := r.URL.Query()["meals"]
@@ -57,7 +118,7 @@ func GeneratePlanView (w http.ResponseWriter, r *http.Request){
 				return
 			}
 			meals, err := strconv.Atoi(mealsQuery[0])
-			if err != nil || (meals < 2 || meals > 6){
+			if err != nil || (meals < 2 || meals > 3){
 				fmt.Println(err)
 				util.ReturnBadRequest(w)
 				return
@@ -65,41 +126,53 @@ func GeneratePlanView (w http.ResponseWriter, r *http.Request){
 			var nc int
 			nc, err = calories.CalculateNeededCalories(profile)
 			if err !=nil{
-				fmt.Println(err)
+				logging.ErrorLogger(err, "routes/plan.go", "GeneratePlanView")
 				util.HTTPServerError(w)
 				return
 			}
-			fmt.Println(nc)
-			//toExclude := []string{}
-			
-			
-			//today := time.Now()
-			
-			// for i := 1;i <= 7; i++{
-			
-			// 	hours := i * 24
-			// 	dayTimeStamp := today.Add(time.Hour * time.Duration(hours))
-			// 	weekDay := dayTimeStamp.Weekday()
-			// 	go func(){
-			// 		generateMutex.Lock()
-			// 		weekPlan.plan[weekDay.String()] = generateDayPlan(&toExclude, nc, dayTimeStamp, amountOfMeals)
-			// 		generateMutex.Unlock()
-			// 		wg.Done()
-			// 	}()
-			// }
-			// wg.Wait()
-			// mw, err := json.Marshal(weekPlan.plan)
-			// if err!=nil{
-			// 	panic(err)
-			// }
-			w.Write([]byte("mw"))
-		} else{
+			toExclude := []int64{}
+			today := time.Now()
+			mealplan := recipes.Mealplan{CreatedOn: today, UserID: derivedID}
+			DayInPlanChan := make(chan dayInPlanWithError, 7)
+			for i := 1;i <= 7; i++{
+				hours := i * 24
+				dayTimeStamp := today.Add(time.Hour * time.Duration(hours))
+				weekDay := dayTimeStamp.Weekday()
+				go generateDayPlan(nc, meals, i, &toExclude ,weekDay.String(), DayInPlanChan)
+			}
+			days := []recipes.DayInPlan{}
+			for i := 1; i <= 7;i++{
+				var dayInPlan dayInPlanWithError
+				dayInPlan =  <- DayInPlanChan
+				if dayInPlan.Err == nil {
+					days = append(days, dayInPlan.Day)
+				}
+			}
+			mealplan.Days = days
+			placeHolderPlan = mealplan
+			w.WriteHeader(200)
+		}else{
 			util.ReturnBadRequest(w)
 		}
 	}
 }
-
-
+//PlanGet checks if a mealplan exists or calls createPlan if one doesn't
+func PlanGet(w http.ResponseWriter, r *http.Request){
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		fmt.Println("derivedID", derivedID)
+		mmp, err := json.Marshal(placeHolderPlan)
+		if err !=nil{
+			util.HTTPServerError(w)
+			return
+		}
+		w.Write(mmp)
+	}else{
+		util.ReturnBadRequest(w)
+	}
+	
+	
+	
+}
 
 //PopulateRecipes gets recipes from the api and stores them in memory for use of the api
 // func PopulateRecipes(ex bool) {

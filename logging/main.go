@@ -18,7 +18,6 @@ func Logger(messageString, typeOfLog, logdir string) bool{
 		if err := recover(); err!=nil{
 			fmt.Println(err)
 			fmt.Println("Recovered in logger")
-			
 		} 
 	}()
 	filename :=  logdir + typeOfLog + ".log"
@@ -42,17 +41,17 @@ func RequestLogger(r *http.Request){
 }
 
 //ErrorLogger is a method to format error messages and sends them to the logger function to be written in the logfile
-func ErrorLogger(err error){
-	Logger("ERROR: " + err.Error(), "errors", "./Log/")
+func ErrorLogger(err error, filename, function string){
+	Logger("ERROR: " + err.Error() + fmt.Sprintf(". File: %s, in: %s", filename, function), "errors", "./Log/")
 }
 
 //HandleServerError is a function that handles errors that shouldn't happen. This excludes errors that happen because of faulty user input
-func HandleServerError(err error) {
-		if err != nil{
-			if os.Getenv("MODE") == "development"{
-				fmt.Println(err)
-			}
-			ErrorLogger(err)
-			panic(err)
-		}
-}
+// func HandleServerError(err error) {
+// 		if err != nil{
+// 			if os.Getenv("MODE") == "development"{
+// 				fmt.Println(err)
+// 			}
+// 			ErrorLogger(err)
+// 			panic(err)
+// 		}
+// }

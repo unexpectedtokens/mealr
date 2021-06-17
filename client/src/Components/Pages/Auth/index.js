@@ -4,6 +4,7 @@ import Create from "./Create";
 import { Box, Grid, makeStyles } from "@material-ui/core";
 import { useEffect, useState } from "react";
 import Logo from "../../Reusables/Logo";
+import { SnackbarProvider } from "notistack";
 
 const useStyles = makeStyles((theme) => ({
   formContainer: {
@@ -47,7 +48,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function Auth({ auth, setAuth }) {
+function Auth({ auth, setAuth, mainAppLoading }) {
   const [loading, setLoading] = useState(false);
   const { path } = useRouteMatch();
   const classes = useStyles();
@@ -56,49 +57,43 @@ function Auth({ auth, setAuth }) {
     localStorage.setItem("Key", data.Key);
     setAuth({ isAuthenticated: true, Key: data.Key });
   };
-  const checkIfAuth = () => {
-    if (auth.isAuthenticated) {
-      return true;
-    }
-    const Key = localStorage.getItem("Key");
-    if (Key !== null) {
-      setAuth({ isAuthenticated: true, Key });
-      return true;
-    }
-  };
 
   useEffect(() => {
-    if (checkIfAuth()) {
+    if (auth.isAuthenticated && !mainAppLoading) {
       history.push("/app/");
     }
-    //eslint-disable-next-line
-  });
+  }, [auth.isAuthenticated, mainAppLoading, history]);
 
   return (
-    <Grid container justify="space-evenly" className={classes.authContainer}>
-      <Box py={10}>
-        <Logo />
-        <Box pt={3} />
-        <Switch basepath>
-          <Route path={`${path}/create`}>
-            <Create
-              onAuthenticate={onAuthenticate}
-              classes={classes}
-              loading={loading}
-              setLoading={setLoading}
-            />
-          </Route>
-          <Route exact path={`${path}`}>
-            <Login
-              onAuthenticate={onAuthenticate}
-              classes={classes}
-              loading={loading}
-              setLoading={setLoading}
-            />
-          </Route>
-        </Switch>
-      </Box>
-    </Grid>
+    <SnackbarProvider
+      maxSnack={2}
+      anchorOrigin={{ vertical: "top", horizontal: "center" }}
+    >
+      <Grid container justify="space-evenly" className={classes.authContainer}>
+        <Box py={10} display="flex" flexDirection="column" alignItems="center">
+          <Logo dark />
+          <Box pt={5} />
+          <Switch basepath>
+            <Route path={`${path}/create`}>
+              <Create
+                onAuthenticate={onAuthenticate}
+                classes={classes}
+                loading={loading}
+                setLoading={setLoading}
+              />
+            </Route>
+            <Route exact path={`${path}`}>
+              <Login
+                onAuthenticate={onAuthenticate}
+                classes={classes}
+                loading={loading}
+                setLoading={setLoading}
+              />
+            </Route>
+          </Switch>
+        </Box>
+      </Grid>
+    </SnackbarProvider>
   );
 }
 

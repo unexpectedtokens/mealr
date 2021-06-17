@@ -28,23 +28,23 @@ const useStyles = makeStyles((theme) => ({
   GetStarted: {
     fontWeight: "bold",
     fontSize: "1.1rem",
-    padding: "0.7rem",
+    padding: "0.7rem 3rem",
     [theme.breakpoints.down("sm")]: {
       fontSize: "0.8rem",
     },
   },
   Header: {
     fontSize: "4rem",
-    fontWeight: "bolder",
+    fontWeight: "900",
     color: theme.palette.grey[900],
     [theme.breakpoints.down("sm")]: {
       fontSize: "2.5rem",
     },
   },
   SubHeader: {
-    fontWeight: "bold",
-    fontSize: "1rem",
-    color: theme.palette.grey[500],
+    fontWeight: 300,
+    fontSize: "1.5rem",
+    color: theme.palette.grey[700],
   },
   ImageGrid: {
     overflow: "hidden",
@@ -59,7 +59,9 @@ function LandingHeader(props) {
 
   const [recipes, setRecipes] = useState([]);
   const getRecipes = async () => {
-    const response = await fetch(`${config.API_URL}/api/recipes/list/?limit=5`);
+    const response = await fetch(
+      `${config.API_URL}/api/recipes/listall/?limit=5`
+    );
     const data = await response.json();
     setRecipes(data);
   };
@@ -70,7 +72,7 @@ function LandingHeader(props) {
       <Grid item lg={6} md={6} sm={6} xs={8}>
         <Box pb={3}>
           <Typography variant="h1" className={classes.Header}>
-            Reach your health goals by generating the perfect mealplan
+            Reach your health goals by getting the perfect mealplan
           </Typography>
         </Box>
         <Box pb={3}>

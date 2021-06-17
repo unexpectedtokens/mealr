@@ -10,9 +10,11 @@ import { useHistory, Link as RouterLink } from "react-router-dom";
 import Logo from "../Reusables/Logo";
 import LandingHeader from "./LandingHeader";
 
-const useStyles = makeStyles({
+const useStyles = makeStyles((theme) => ({
   ToolBar: {
     justifyContent: "space-between",
+    padding: "2rem 0 0 0",
+    borderBottom: "#eee 1px solid",
   },
   NavLink: {
     color: "inherit",
@@ -22,7 +24,18 @@ const useStyles = makeStyles({
     fontSize: "0.9rem",
     whiteSpace: "nowrap",
   },
-});
+  slantedDiv: {
+    width: "100%",
+    height: "60%",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    //background: `linear-gradient(to right, ${theme.palette.primary.main}, ${theme.palette.secondary.main} 150%) `,
+    backgroundColor: theme.palette.primary.main,
+    clipPath: "polygon(0 80%, 50% 60%, 80% 10%, 100% 0, 100% 100%, 0 100%)",
+    zIndex: -1,
+  },
+}));
 
 function Index(props) {
   let history = useHistory();
@@ -32,7 +45,7 @@ function Index(props) {
       <AppBar color="transparent" elevation={0} position="relative">
         <Container maxWidth="lg">
           <Toolbar className={classes.ToolBar}>
-            <Logo />
+            <Logo dark orientation="horizontal" />
 
             <Box display="flex" justifyContent="flex-end" alignItems="center">
               <Link

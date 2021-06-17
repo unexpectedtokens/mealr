@@ -1,28 +1,53 @@
-import { Box, Grow, Paper, Typography, Grid } from "@material-ui/core";
+import {
+  Box,
+  Grow,
+  Paper,
+  Typography,
+  Grid,
+  makeStyles,
+} from "@material-ui/core";
+import { useEffect } from "react";
+import { Helmet } from "react-helmet";
 import PNC from "../../../../Reusables/App/ProfileNotComplete";
 
-function Home({ navigate, validForMG, loading, userInfo }) {
+const useStyles = makeStyles((theme) => ({
+  bannerText: {
+    color: theme.palette.grey[900],
+    fontWeight: 600,
+    fontSize: "3em",
+  },
+}));
+
+function Home({ navigate, validForMG, loading, userInfo, setActiveRoute }) {
+  const classes = useStyles();
+  useEffect(() => {
+    setActiveRoute("home");
+    //eslint-disable-next-line
+  }, []);
+  console.log(validForMG);
   return (
     <>
+      <Helmet>
+        <title>Home</title>
+      </Helmet>
       <Box display="flex" flexDirection="column">
-        {!validForMG ? <PNC navigate={navigate} show={!validForMG} /> : null}
         <Box py={2}>
-          <Paper>
-            <Box p={2}>
-              {!loading ? (
-                <Typography variant="h4">
-                  Welcome{" "}
-                  {userInfo.username !== "" ? (
-                    <>
-                      {userInfo.username[0].toUpperCase() +
-                        userInfo.username.slice(1, userInfo.username.length)}
-                    </>
-                  ) : null}
-                </Typography>
-              ) : null}
-            </Box>
-          </Paper>
+          <Box p={2} pl={0}>
+            {!loading ? (
+              <Typography variant="h2" className={classes.bannerText}>
+                Welcome{" "}
+                {userInfo.username !== "" ? (
+                  <>
+                    {userInfo.username[0].toUpperCase() +
+                      userInfo.username.slice(1, userInfo.username.length)}
+                  </>
+                ) : null}
+              </Typography>
+            ) : null}
+          </Box>
         </Box>
+        {!validForMG ? <PNC navigate={navigate} show={!validForMG} /> : null}
+
         <Box flex={1} pt={2}>
           <Grid container spacing={2}>
             <Grid item xs={12} md={6} lg={4}>

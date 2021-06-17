@@ -5,23 +5,24 @@ import (
 
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
-	"github.com/unexpectedtokens/mealr/auth"
 	"github.com/unexpectedtokens/mealr/logging"
+	"github.com/unexpectedtokens/mealr/mediahandler"
 	"github.com/unexpectedtokens/mealr/migrations"
 	"github.com/unexpectedtokens/mealr/scraper"
-
 	"github.com/unexpectedtokens/mealr/server"
+	"github.com/unexpectedtokens/mealr/util"
 )
 
 
 
 func main(){
+	mediahandler.CheckIfDirsExistOrCreate()
 	logging.InitLogging()
 	err := godotenv.Load()
 	if err != nil{
 		panic(err)
 	}
-	auth.SigningKey = []byte(os.Getenv("JWT_SECRET"))
+	util.SigningKey = []byte(os.Getenv("JWT_SECRET"))
 	if len(os.Args) > 1{
 		for _, x := range os.Args{
 			if x == "flush"{
@@ -31,7 +32,9 @@ func main(){
 				migrations.RunMigrations()
 			}
 			if x == "scrape"{
-				scraper.CollectRecipes()
+				//scraper.CollectRecipesBBC()
+				//scraper.CollectRecipesEYS()
+				scraper.CollectIngredients()
 			}
 			if x == "runserver"{
 				server.HTTPServer()

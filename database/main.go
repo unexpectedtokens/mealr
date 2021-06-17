@@ -27,12 +27,12 @@ func InitDB(){
 	config[pghost], config[pgport], config[pguser], config[pgpw], config[pgdb])
 	DBCon, err = sql.Open("postgres", psqlInfo)
 	if err != nil{
-		defer logging.ErrorLogger(err)
+		defer logging.ErrorLogger(err, "database/main.go", "InitDB")
 		panic(err)
 	}
 	err = DBCon.Ping()
 	if err != nil{
-		defer logging.ErrorLogger(err)
+		defer logging.ErrorLogger(err, "database/main.go", "InitDB")
 		panic(err)
 	}
 	fmt.Println("Succesfully connected to DB")
