@@ -7,6 +7,7 @@ import (
 )
 
 type Ingredient struct{
+	ID int64
 	Measurement string
 	Amount float64
 	Title string
@@ -26,6 +27,13 @@ type FoodIngredient struct{
 	ServingUnit string
 }
 
+type MethodStep struct{
+	ID int64
+	StepDescription string
+	DurationInMinutes float32
+	TimeStampAdded time.Time
+}
+
 //Recipe is a representation of a recipe in the database. It is used in the scraper and in the auth routes
 type Recipe struct{
 	ID int64
@@ -36,9 +44,6 @@ type Recipe struct{
 	SourceURL,
 	ImageURL,
 	Description string
-	
-	PrepTime string
-	CookingTime string
 	Serves int
 	ServingSize string
 	CalsProvided bool
@@ -46,6 +51,8 @@ type Recipe struct{
 	Vegetarian bool
 	Vegan bool
 	TypeOfMeal string
+	LikeByUser bool
+	Likes int
 }
 
 type RecipeFoodIngredientList []RecipeIngredientFromFoodIngredient
@@ -59,9 +66,10 @@ type AllRecipeData struct{
 	Title string
 	Source string
 	ImageURL string
-	Username string
 	Vegan bool
 	Vegetarian bool
+	Likes int
+	LikedByUser bool
 }
 
 //IsValidForDBInsertion checks if a scraped recipe is populated enough to be added to the db

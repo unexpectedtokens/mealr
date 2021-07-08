@@ -6,6 +6,8 @@ import ProfileEdit from "./Edit";
 import ProfileLanding from "./Landing";
 import { useQuery } from "react-query";
 import { CircularProgress } from "@material-ui/core";
+import { useHistory } from "react-router";
+import { useSnackbar } from "notistack";
 
 function Profile({
   auth,
@@ -16,7 +18,8 @@ function Profile({
   userInfo,
 }) {
   const { path } = useRouteMatch();
-
+  const history = useHistory();
+  const { enqueueSnackbar } = useSnackbar();
   const fetchProfile = async () => {
     try {
       const response = await handleAuthenticatedEndpointRequest(
@@ -27,10 +30,11 @@ function Profile({
       return response.json();
     } catch (e) {
       console.log("Something went wrong fetching profile:", e);
+      throw new Error(e);
     }
   };
-  const { data, isLoading, refetch } = useQuery(
-    ["profile", auth.Key],
+  const { data, isLoading, refetch, isError } = useQuery(
+    ["profile"],
     fetchProfile
   );
 
@@ -38,6 +42,15 @@ function Profile({
     setActiveRoute("profile");
     //eslint-disable-next-line
   }, []);
+  useEffect(() => {
+    if (isError && !isLoading) {
+      enqueueSnackbar(
+        "something went wrong fetching your profile info. Please try again later"
+      );
+      history.goBack();
+    }
+  }, [isError, isLoading, history, enqueueSnackbar]);
+
   return (
     <>
       <Helmet>

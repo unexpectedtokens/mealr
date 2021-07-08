@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -13,7 +15,7 @@ import (
 	"github.com/unexpectedtokens/mealr/util"
 )
 
-
+var migrationFileName = flag.String("filename", "initial_migration", "name of the specific file to parse for migration")
 
 func main(){
 	mediahandler.CheckIfDirsExistOrCreate()
@@ -22,6 +24,8 @@ func main(){
 	if err != nil{
 		panic(err)
 	}
+	flag.Parse()
+	fmt.Println(flag.Args(), *migrationFileName)
 	util.SigningKey = []byte(os.Getenv("JWT_SECRET"))
 	if len(os.Args) > 1{
 		for _, x := range os.Args{
@@ -29,7 +33,7 @@ func main(){
 				migrations.Flush()
 			}
 			if x == "migrate"{
-				migrations.RunMigrations()
+				migrations.RunMigrations(*migrationFileName)
 			}
 			if x == "scrape"{
 				//scraper.CollectRecipesBBC()

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/unexpectedtokens/mealr/auth"
 	"github.com/unexpectedtokens/mealr/calories"
 	"github.com/unexpectedtokens/mealr/middleware"
@@ -13,7 +14,7 @@ import (
 )
 
 // UpdateProfileView updates an existing
-func UpdateProfileView(w http.ResponseWriter, r *http.Request){
+func UpdateProfileView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
 	
 	if !util.CheckIfMethodAllowed(w, r, []string{"PUT", "UPDATE"}){
 		return
@@ -44,7 +45,7 @@ func UpdateProfileView(w http.ResponseWriter, r *http.Request){
 	
 }
 //GetProfileView gets a profile based on the id passed in the JWT
-func GetProfileView(w http.ResponseWriter, r *http.Request){
+func GetProfileView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
 	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID);ok{
 		profile := profiles.Profile{UserID: derivedID}
 		err := profile.Retrieve()
@@ -65,7 +66,7 @@ func GetProfileView(w http.ResponseWriter, r *http.Request){
 
 
 //ActivityOptionsView returns the levels in activity
-func ActivityOptionsView(w http.ResponseWriter, r *http.Request){
+func ActivityOptionsView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
 	if !util.CheckIfMethodAllowed(w, r, []string{"GET"}){
 		return
 	}
@@ -81,7 +82,7 @@ type validProfileResponse struct {
 	Valid bool
 }
 //ProfileValidForMealPlanGeneratorView checks if the profile in question is valid for mealplan generation. If not the frontend can act accordingly
-func ProfileValidForMealPlanGeneratorView(w http.ResponseWriter, r *http.Request){
+func ProfileValidForMealPlanGeneratorView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
 	if !util.CheckIfMethodAllowed(w, r, []string{"GET"}){
 		util.ReturnBadRequest(w)
 		return

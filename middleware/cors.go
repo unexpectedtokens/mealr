@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 
@@ -12,13 +15,15 @@ func setupCORS(w *http.ResponseWriter){
 }
 
 //AllowCORSMiddleware handles corssetup
-func AllowCORSMiddleware (fn http.HandlerFunc) http.HandlerFunc{
-	return func(w http.ResponseWriter, r *http.Request){
+func AllowCORSMiddleware (fn httprouter.Handle) httprouter.Handle{
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
 		setupCORS(&w)
+		fmt.Println(r.URL, "for the love of god")
 		if r.Method == "OPTIONS"{
+			w.WriteHeader(http.StatusOK)
 			return
 		}
-		fn.ServeHTTP(w, r)
+		fn(w, r, ps)
 	}
 }
 

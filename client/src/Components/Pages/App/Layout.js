@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme) => ({
   },
   MainContainer: {
     width: "100%",
-    minHeight: "100vh",
+    minHeight: "95vh",
     backgroundColor: theme.palette.primary.contrastText,
     maxWidth: theme.breakpoints.values.xl,
     [theme.breakpoints.up("lg")]: {
@@ -44,11 +44,16 @@ const useStyles = makeStyles((theme) => ({
       overflow: "hidden",
       borderRadius: theme.shape.borderRadius,
     },
+    [theme.breakpoints.down("md")]: {
+      height: "100vh",
+    },
   },
   Nav: {
     backgroundColor: theme.palette.primary.contrastText,
+    maxHeight: "100vh",
     height: "100%",
     padding: "2rem 1rem",
+    zIndex: 1001,
   },
   DrawerGridItem: {
     zIndex: 1000,
@@ -74,12 +79,6 @@ const useStyles = makeStyles((theme) => ({
       justifyContent: "center",
     },
   },
-  NavOpen: {
-    right: 0,
-  },
-  NavClosed: {
-    right: "100%",
-  },
   MenuOpenButton: {
     [theme.breakpoints.up("md")]: {
       display: "none",
@@ -92,6 +91,7 @@ const useStyles = makeStyles((theme) => ({
     },
     display: "flex",
     justifyContent: "center",
+    minHeight: "100vh",
   },
   NavButton: {
     marginBottom: theme.spacing(3),
@@ -223,9 +223,9 @@ function Layout({
         </Grid>
         <Grid item xl={10} lg={10} md={9} sm={12} xs={12}>
           <Box
-            pt={20}
             px={smallScreen ? 1 : 2}
             pb={smallScreen ? 1 : 2}
+            pt={20}
             position="relative"
           >
             <Toolbar className={classes.MainScreenNav}>

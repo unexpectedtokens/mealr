@@ -3,13 +3,14 @@ package middleware
 import (
 	"net/http"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/unexpectedtokens/mealr/logging"
 )
 
 //LoggingMiddleware Logs all requests to the requests.log file
-func LoggingMiddleware(h http.HandlerFunc) http.HandlerFunc{
-	return func(w http.ResponseWriter, r *http.Request){
+func LoggingMiddleware(h httprouter.Handle) httprouter.Handle{
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
 		logging.RequestLogger(r)
-		h.ServeHTTP(w, r)
+		h(w, r, ps)
 	}
 }

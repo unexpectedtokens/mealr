@@ -108,7 +108,7 @@ function Main({ setAuth, auth, refreshOn404 }) {
         Key
       );
       const data = await response.json();
-      console.log(data);
+      // console.log(data);
       dispatch(validForMPGActionCreator(data.Valid));
     } catch (e) {
       console.log(e);
@@ -116,25 +116,28 @@ function Main({ setAuth, auth, refreshOn404 }) {
   };
 
   const handleAuthenticatedEndpointRequest = (endpoint, type, body = "") => {
-    console.log(
-      `Attempting endpoint fetch at ${endpoint}, method: ${type}, with key ${
-        auth.Key
-      } ${body ? body : ""}`
-    );
+    // console.log(
+    //   `Attempting endpoint fetch at ${endpoint}, method: ${type}, with key ${
+    //     auth.Key
+    //   } ${body ? body : ""}`
+    // );
     return new Promise(async (resolve, reject) => {
       try {
         const callParams = {
           method: type,
-          headers: { Authorization: auth.Key },
+          headers: {
+            Authorization: auth.Key,
+            "Content-Type": "application/json",
+          },
         };
         if (body) {
           callParams["body"] = body;
         }
         let response = await fetch(endpoint, callParams);
-        console.log(
-          `returned status code from endpoint ${endpoint} hit attempt: `,
-          response.status
-        );
+        // console.log(
+        //   `returned status code from endpoint ${endpoint} hit attempt: `,
+        //   response.status
+        // );
         if (response.status === 401) {
           console.log(response.status);
 
@@ -146,7 +149,11 @@ function Main({ setAuth, auth, refreshOn404 }) {
           console.log(data);
           reject(response.status);
         }
-        if (response.status === 200 || response.status === 201) {
+        if (
+          response.status === 200 ||
+          response.status === 201 ||
+          response.status === 404
+        ) {
           return resolve(response);
         } else {
           throw new Error("bad request, status code: " + response.status);
@@ -171,7 +178,7 @@ function Main({ setAuth, auth, refreshOn404 }) {
         "GET"
       );
       const data = await response.json();
-      console.log("data:", data);
+      // console.log("data:", data);
 
       dispatch(userInfoActionCreator(data.Username));
       dispatch(loadingActionCreator(false));

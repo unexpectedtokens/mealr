@@ -1,6 +1,6 @@
 import { Route, Switch, useRouteMatch } from "react-router-dom";
 import config from "../../../../../Config/config";
-import Recipe from "./Recipe";
+import Recipe from "./RecipeDetail/Recipe";
 import RecipeList from "./RecipeList";
 import AddRecipe from "./AddRecipe";
 import { useEffect } from "react";
@@ -10,7 +10,6 @@ import { Helmet } from "react-helmet";
 function Recipes({
   navigate,
   setActiveRoute,
-  auth,
   refresh,
   handleAuthenticatedEndpointRequest,
   userInfo,
@@ -20,6 +19,32 @@ function Recipes({
     setActiveRoute("recipes");
     //eslint-disable-next-line
   }, []);
+  const handleAddToFavourites = async (id) => {
+    return new Promise(async (resolve, reject) => {
+      const response = await handleAuthenticatedEndpointRequest(
+        `${config.API_URL}/api/recipes/like/${id}`,
+        "POST"
+      );
+      if (response.status !== 200) {
+        throw new Error(response.status);
+      } else {
+        return resolve("ok");
+      }
+    });
+  };
+  const handleRemoveFromFavourites = async (id) => {
+    return new Promise(async (resolve, reject) => {
+      const response = await handleAuthenticatedEndpointRequest(
+        `${config.API_URL}/api/recipes/like/${id}`,
+        "DELETE"
+      );
+      if (response.status !== 200) {
+        throw new Error(response.status);
+      } else {
+        return resolve("ok");
+      }
+    });
+  };
   return (
     <>
       <Helmet>
@@ -32,7 +57,11 @@ function Recipes({
             <RecipeList
               navigate={navigate}
               url={`${config.API_URL}/api/recipes/listmine/`}
-              auth={auth}
+              handleAddToFavourites={handleAddToFavourites}
+              handleRemoveFromFavourites={handleRemoveFromFavourites}
+              handleAuthenticatedEndpointRequest={
+                handleAuthenticatedEndpointRequest
+              }
             />
           )}
         />
@@ -40,7 +69,6 @@ function Recipes({
           path={`${path}/create`}
           render={() => (
             <AddRecipe
-              auth={auth}
               refresh={refresh}
               navigate={navigate}
               handleAuthenticatedEndpointRequest={
@@ -56,6 +84,11 @@ function Recipes({
             <RecipeList
               navigate={navigate}
               url={`${config.API_URL}/api/recipes/listfav/`}
+              handleAddToFavourites={handleAddToFavourites}
+              handleRemoveFromFavourites={handleRemoveFromFavourites}
+              handleAuthenticatedEndpointRequest={
+                handleAuthenticatedEndpointRequest
+              }
             />
           )}
         />
@@ -64,13 +97,27 @@ function Recipes({
           render={() => (
             <RecipeList
               navigate={navigate}
+              handleAddToFavourites={handleAddToFavourites}
+              handleRemoveFromFavourites={handleRemoveFromFavourites}
+              handleAuthenticatedEndpointRequest={
+                handleAuthenticatedEndpointRequest
+              }
               url={`${config.API_URL}/api/recipes/listall/`}
             />
           )}
         />
         <Route
           path={`${path}/detail/:id`}
-          render={() => <Recipe userInfo={userInfo} />}
+          render={() => (
+            <Recipe
+              userInfo={userInfo}
+              addToFavs={handleAddToFavourites}
+              removeFromFavs={handleRemoveFromFavourites}
+              handleAuthenticatedEndpointRequest={
+                handleAuthenticatedEndpointRequest
+              }
+            />
+          )}
         />
         <Route
           path={`${path}`}

@@ -17,7 +17,7 @@ const useStyles = makeStyles({
     overflow: "hidden",
   },
   FormHeader: {
-    backgroundImage: `linear-gradient(#47824a, #47824a)`,
+    backgroundImage: `linear-gradient(#47824abb, #47824a), url(${img_1})`,
     height: 150,
     backgroundPosition: "center",
     backgroundSize: "120%",

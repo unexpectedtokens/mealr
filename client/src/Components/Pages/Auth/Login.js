@@ -11,6 +11,7 @@ import { useHistory } from "react-router-dom";
 import { ChevronRight } from "@material-ui/icons";
 import { useSnackbar } from "notistack";
 import { Helmet } from "react-helmet";
+import config from "../../../Config/config";
 
 function Login({ classes, onAuthenticate }) {
   const [credentials, setCredentials] = useState({
@@ -27,7 +28,7 @@ function Login({ classes, onAuthenticate }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/auth/obtain/", {
+      const response = await fetch(`${config.API_URL}/auth/obtain/`, {
         method: "POST",
         body: JSON.stringify(credentials),
         headers: {
@@ -52,6 +53,7 @@ function Login({ classes, onAuthenticate }) {
       enqueueSnackbar("Something went wrong, please try again", {
         variant: "error",
       });
+      console.log(e);
     }
     setLoading(false);
   };

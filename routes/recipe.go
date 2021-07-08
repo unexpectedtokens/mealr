@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
+	"time"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/unexpectedtokens/mealr/auth"
 	db "github.com/unexpectedtokens/mealr/database"
 	"github.com/unexpectedtokens/mealr/logging"
@@ -16,37 +17,249 @@ import (
 	"github.com/unexpectedtokens/mealr/util"
 )
 
+type listQuery string
+
+const all listQuery = "all"
+const mine listQuery = "mine"
+const fav listQuery = "fav"
+
+func getIDfromString(id string) (int64, error){
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		return 0, err
+	}
+	int64ID := int64(intID)
+	return int64ID, nil
+}
+
+func checkIfLikedByUser(userid, recipeid int64) (bool, error){
+	var id int64
+	err := statements.LikedByUserSTMT.QueryRow(userid, recipeid).Scan(&id)
+	if err != nil && err != sql.ErrNoRows {
+		return false, err
+	}
+	if err == sql.ErrNoRows{
+		return false, nil
+	}
+	if id == 0{
+		return false, nil
+	}
+	return true, nil
+
+}
+
+func getAllLikesFromRecipe(id int64) (jsonResponse []byte, err error){
+	var Likes LikesStruct
+	err = statements.AllLikeFromRecipeSTMT.QueryRow(id).Scan(&Likes.Likes)
+	if err != nil && err != sql.ErrNoRows{
+		jsonResponse, err = json.Marshal(Likes)
+		if err != nil{
+			return jsonResponse, err
+		}
+		return jsonResponse, nil
+	}
+	jsonResponse, err  = json.Marshal(Likes)
+	if err != nil {
+		return []byte{}, err
+	}
+	return 
+}
 
 type allRecipeResponseList []recipes.AllRecipeData
+type prepared struct{
+	GetFoodIngFromRecipeSTMT, 
+	GetMiscIngFromRecipeSTMT, 
+	GetMethodFromRecipeSTMT, 
+	GetRecipeDetailSTMT, 
+	CheckUserIsOwnerSTMT,
+	RecipeFoodIngredientCreateSTMT, 
+	RecipeFoodIngredientDeleteSTMT,
+	RecipeMiscIngredientCreateSTMT, 
+	RecipeMiscIngredientDeleteSTMT,
+	MethodStepDeleteSTMT,
+	MethodStepUpdateSTMT,
+	AllRecipeSTMT,
+	FavouriteRecipeSTMT,
+	AllLikeFromRecipeSTMT,
+	LikedByUserSTMT,
+	MyRecipeSTMT,
+	AddToFavSTMT,
+	RemoveFromFavSTMT,
+	CreateNoteSTMT,
+	UpdateNoteSTMT,
+	DeleteNoteSTMT,
+	GetNotesSTMT,
+	MethodStepCreateSTMT *sql.Stmt
+}
 
+var statements prepared
 
-func fetchRecipeList(query string) (allRecipeResponseList, error){
-	stmt, err := db.DBCon.Prepare(query)
-	if err !=nil{
-		return allRecipeResponseList{}, err
+func prepareRecipeStatements() error{
+	statements = prepared{}
+	var err error
+	statements.GetFoodIngFromRecipeSTMT, err = db.DBCon.Prepare("SELECT iffr.id, iffr.amount, foi.name, foi.cal_per_100, foi.serving_unit FROM ingredients_from_foodingredient_from_recipe iffr INNER JOIN food_ingredient foi ON foi.id = iffr.foodingredient_id WHERE iffr.recipeid = $1;")
+	if err != nil {
+		return err
+	}
+	statements.GetMiscIngFromRecipeSTMT, err = db.DBCon.Prepare("SELECT id, ingredient_title, ingredient_amount, ingredient_measurement FROM ingredients_from_recipe WHERE recipeid=$1;")
+	if err != nil {
+		return err
+	}
+	statements.GetMethodFromRecipeSTMT, err = db.DBCon.Prepare("SELECT id, method, moment_added, duration_in_minutes  FROM methods_from_recipe WHERE recipeid=$1;")
+	if err != nil {
+		return err
+	}
+	statements.GetRecipeDetailSTMT, err = db.DBCon.Prepare(`
+	SELECT 
+	r.id,
+	r.title,
+	r.image_url,
+	r.source,
+	r.source_url,
+	r.vegan,
+	r.vegetarian,
+	r.type_of_meal, 
+	u.username
+	FROM recipes r INNER JOIN users u ON u.id = r.owner
+	WHERE r.id = $1;`)
+	if err != nil{
+		return err
+	}
+	statements.CheckUserIsOwnerSTMT, err = db.DBCon.Prepare("SELECT owner FROM recipes WHERE id = $1;")
+	if err != nil {
+		return err
+	}
+	statements.RecipeFoodIngredientCreateSTMT, err = db.DBCon.Prepare("INSERT INTO ingredients_from_foodingredient_from_recipe (amount, recipeid, foodingredient_id) VALUES ($1, $2, $3) RETURNING id;")
+	if err != nil {
+		return err
+	}
+	statements.RecipeMiscIngredientCreateSTMT, err = db.DBCon.Prepare("INSERT INTO ingredients_from_recipe (recipeid, ingredient_measurement, ingredient_amount, ingredient_title) VALUES ($1, $2, $3, $4) RETURNING id;")
+	if err != nil {
+		return err
+	}
+	statements.MethodStepCreateSTMT, err = db.DBCon.Prepare("INSERT INTO methods_from_recipe (recipeid, method, moment_added, duration_in_minutes) VALUES ($1, $2, $3, $4) RETURNING id;")
+	if err != nil {
+		return err
+	}
+	statements.RecipeFoodIngredientDeleteSTMT, err = db.DBCon.Prepare("DELETE FROM ingredients_from_foodingredient_from_recipe WHERE id = $1;")
+	if err != nil {
+		return err
+	}
+	statements.RecipeMiscIngredientDeleteSTMT, err = db.DBCon.Prepare("DELETE FROM ingredients_from_recipe WHERE id = $1;")
+	if err != nil {
+		return err
+	}
+	statements.MethodStepDeleteSTMT, err = db.DBCon.Prepare("DELETE FROM methods_from_recipe WHERE id = $1;")
+	if err != nil {
+		return err
+	}
+	statements.AllLikeFromRecipeSTMT, err = db.DBCon.Prepare("SELECT COUNT(*) FROM favourite_recipes WHERE recipeid = $1;")
+	if err != nil {
+		return err
+	}
+	statements.AllRecipeSTMT, err = db.DBCon.Prepare(`SELECT
+	r.id,
+	r.title,
+	r.image_url,
+	COUNT(f.id) AS f_count
+FROM recipes r
+LEFT JOIN favourite_recipes f on f.recipeid = r.id
+GROUP BY f.recipeid, r.id
+ORDER BY f_count DESC
+LIMIT $1 OFFSET $2;`)
+  if err != nil {
+	  return fmt.Errorf("error creating allrecipeSTMT: %s", err.Error())
+  }
+  statements.MyRecipeSTMT, err = db.DBCon.Prepare(`SELECT
+  r.id,
+  r.title,
+  r.image_url,
+  COUNT(f.id) AS f_count
+FROM recipes r
+LEFT JOIN favourite_recipes f on f.recipeid = r.id
+WHERE r.owner = $1
+GROUP BY r.id, f.recipeid
+ORDER BY f_count DESC
+LIMIT $2 OFFSET $3;`)
+	if err != nil {
+		return fmt.Errorf("error creating MyRecipeSTMT: %s", err.Error())
+	}
+	statements.FavouriteRecipeSTMT, err = db.DBCon.Prepare(`SELECT
+	r.id,
+	r.title,
+	r.image_url,
+	COUNT(f.id) AS f_count
+	FROM recipes r
+	LEFT JOIN favourite_recipes f on f.recipeid = r.id
+	WHERE f.userid = $1
+	GROUP BY r.id, f.id
+	ORDER BY f_count DESC
+	LIMIT $2 OFFSET $3;`)
+	if err != nil {
+		return fmt.Errorf("error creating favRecipeSTMT: %s", err.Error())
+	}
+	statements.LikedByUserSTMT, err = db.DBCon.Prepare("SELECT id FROM favourite_recipes WHERE userid = $1 AND recipeid = $2;")
+	if err != nil{
+		return fmt.Errorf("error preprating likedbyuser statement: %s", err.Error())
+	}
+	statements.AddToFavSTMT, err = db.DBCon.Prepare("INSERT INTO favourite_recipes (recipeid, userid) VALUES ($1, $2);")
+	if err != nil{
+		return fmt.Errorf("error preprating addtofav statement: %s", err.Error())
+	}
+	statements.RemoveFromFavSTMT, err = db.DBCon.Prepare("DELETE FROM favourite_recipes WHERE userid = $1 AND recipeid = $2;")
+	if err != nil{
+		return fmt.Errorf("error preprating removefromfav statement: %s", err.Error())
+	}
+	return nil
+}
+
+func fetchRecipeList(queryType listQuery, userid int64, limit, offset int) (jsonresponse []byte, err error){
+	var rows *sql.Rows
+	switch queryType{
+	case all:
+		rows, err = statements.AllRecipeSTMT.Query(limit, offset)
+	case fav:
+		rows, err = statements.FavouriteRecipeSTMT.Query(userid, limit, offset)
+	case mine:
+		rows, err = statements.MyRecipeSTMT.Query(userid, limit, offset)
+	default:
+		return jsonresponse, fmt.Errorf("error: not a valid queryType")
+	}
+	if err != nil {
+		return jsonresponse, fmt.Errorf("error querying statement: %s, querytype: %s, userid: %d, limit: %d, offset: %d", err.Error(), queryType, userid, limit, offset)
 	}
 	response := allRecipeResponseList{}
-	rows, err := stmt.Query()
-	if err != nil {
-		return allRecipeResponseList{}, err
-	}
+	
 	defer rows.Close()
 	for rows.Next(){
 		x := recipes.AllRecipeData{}
 		var imageURL sql.NullString
-		err := rows.Scan(&x.ID, &x.Title, &imageURL, &x.Username)
-		if imageURL.Valid{
-			x.ImageURL = imageURL.String
-		}else{
-			x.ImageURL = ""
+
+	// 	r.id,
+	// r.title,
+	// r.image_url,
+	// COUNT(f.id) AS f_count,
+	// f.recipeid = r.id AS likedbyuser		
+
+		rows.Scan(&x.ID, &x.Title, &imageURL, &x.Likes)
+		x.ImageURL = imageURL.String
+		likedByUserID := 0
+		err = statements.LikedByUserSTMT.QueryRow(userid, x.ID).Scan(&likedByUserID)
+		if err != nil && err != sql.ErrNoRows{
+			fmt.Println(err)
 		}
-		if err == nil{
+		x.LikedByUser = likedByUserID > 0
+		if err == nil || err == sql.ErrNoRows{
 			response = append(response, x)
 		}else{
 			fmt.Println(err)
 		}
 	}
-	return response, nil
+	jsonresponse, err = json.Marshal(response)
+	if err != nil {
+		return jsonresponse, fmt.Errorf("error creating json response: %s", err.Error())
+	}
+	return jsonresponse, nil
 }
 
 func getParams(r *http.Request) (int, int){
@@ -71,127 +284,72 @@ func getParams(r *http.Request) (int, int){
 }
 
 //AllRecipes lists all recipes
-func AllRecipes(w http.ResponseWriter, r *http.Request){
-	limit, offset := getParams(r)
-	recipes, err := fetchRecipeList(fmt.Sprintf("SELECT r.id, r.title, r.image_url, u.username FROM recipes r INNER JOIN users u ON r.owner = u.id LIMIT %d OFFSET %d;", limit, offset))
-	if err !=nil{
-		util.HTTPServerError(w)
-		return
-	}
-	fmt.Println(recipes, offset, limit)
-	response, err := json.Marshal(recipes)
-	
-	if err !=nil{
-		util.HTTPServerError(w)
-		return
-	}
-	w.Write(response)
-}
-func MyRecipes(w http.ResponseWriter, r *http.Request){
-	if util.CheckIfMethodAllowed(w, r, []string{"GET"}){
-		if userid, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
-			limit, offset := getParams(r)
-			recipes, err := fetchRecipeList(fmt.Sprintf("SELECT r.id, r.title, r.image_url, u.username FROM recipes r INNER JOIN users u ON r.owner = u.id WHERE r.owner = %d LIMIT %d OFFSET %d;", userid, limit, offset))
-			if err != nil{
-				util.HTTPServerError(w)
-				return
-			}
-			response, err := json.Marshal(recipes)
-			if err != nil{
-				fmt.Println(err)
-				util.HTTPServerError(w)
-				return
-			}
-			w.Write(response)
-		} else {
-			auth.ReturnUnauthorized(w)
+func AllRecipes(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
+	if userid, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+
+		limit, offset := getParams(r)
+		jsonresponse, err := fetchRecipeList(all, int64(userid), limit, offset)
+		if err != nil {
+			util.HTTPServerError(w)
+			fmt.Println("allrecipe err", err)
+			return
 		}
+		w.Write(jsonresponse)
+	} else {
+		auth.ReturnUnauthorized(w)
+	}	
+}
+
+func MyRecipes(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
+	if userid, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		limit, offset := getParams(r)
+		jsonresponse, err := fetchRecipeList(mine, int64(userid), limit, offset)
+		if err != nil{
+			util.HTTPServerError(w)
+			fmt.Println(err)
+			return
+		}
+		w.Write(jsonresponse)
+	} else {
+		auth.ReturnUnauthorized(w)
+	}	
+}
+
+func FetchFavouriteRecipes(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	if userid, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		limit, offset := getParams(r)
+		jsonResponse, err := fetchRecipeList(fav, int64(userid), limit, offset)
+		if err != nil{
+			util.HTTPServerError(w)
+			return
+		}
+		w.Write(jsonResponse)
 	}else{
-		util.HTTPErrorWrongMethod(w)
+		auth.ReturnUnauthorized(w)
 	}
 }
 
-func FetchFavouriteRecipes(w http.ResponseWriter, r *http.Request){
-	// if util.CheckIfMethodAllowed(w,r,[]string{"GET"}){
-	// 	if userid, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
-	// 		limit, offset := getParams(r)
-	// 		recipes, err := fetchRecipeList("SELECT * FROM favourites ")
-	// 		if err != nil{
-	// 			util.HTTPServerError(w)
-	// 			return
-	// 		}
-	// 		response, err := json.Marshal(recipes)
-	// 		if err != nil{
-	// 			util.HTTPServerError(w)
-	// 			return
-	// 		}
-	// 		w.Write(response)
-	// 	}else{
-	// 		auth.ReturnUnauthorized(w)
-	// 	}
-	// } else{
-	// 	util.HTTPErrorWrongMethod(w)
-	// }
-}
 
 
-func getIDFromString(url string) (id int, err error){
-	splitURL := strings.Split(url, "/")
-	idStr := splitURL[len(splitURL) - 1]
-	id, err = strconv.Atoi(idStr)
-	if err != nil{
-		return id, err
-	}
-	return id, nil
-}
 
 //RecipeDetail returns detailinfo about a recipe
-func RecipeDetail(w http.ResponseWriter, r *http.Request){
-	id, err := getIDFromString(r.URL.String())
-	if err != nil{
-		util.ReturnBadRequest(w)
-		return
-	}
-	stmt, err := db.DBCon.Prepare(`
-	SELECT 
-	r.id,
-	r.title,
-	r.image_url,
-	r.source,
-	r.source_url,
-	r.preptime,
-	r.cooktime,
-	r.vegan,
-	r.vegetarian,
-	r.type_of_meal, 
-	u.username
-	FROM recipes r INNER JOIN users u ON u.id = r.owner
-	WHERE r.id = $1;`)
-	if err != nil{
-		fmt.Println(err)
-		util.HTTPServerError(w)
-		return
-	}
+func RecipeDetail(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	id := ps.ByName("id")
 	recipe := recipes.Recipe{}
 	var imageURL sql.NullString
 	var sourceURL sql.NullString
 	var source sql.NullString
-	var prepTime sql.NullString
-	var cookingTime sql.NullString
 	var vegan = sql.NullBool{}
 	var veggie = sql.NullBool{}
-	err = stmt.QueryRow(id).Scan(&recipe.ID, &recipe.Title, &imageURL, &source, &sourceURL, &prepTime, &cookingTime, &vegan, &veggie, &recipe.TypeOfMeal, &recipe.Owner.Username)
+	err := statements.GetRecipeDetailSTMT.QueryRow(id).Scan(&recipe.ID, &recipe.Title, &imageURL, &source, &sourceURL, &vegan, &veggie, &recipe.TypeOfMeal, &recipe.Owner.Username)
 	if err != nil {
 		fmt.Println(err)
 		util.ReturnNotFound(w)
 		return
 	}
-	
 	recipe.ImageURL = imageURL.String
 	recipe.SourceURL = sourceURL.String
 	recipe.Source = source.String
-	recipe.PrepTime = prepTime.String
-	recipe.CookingTime = cookingTime.String
 	if vegan.Valid{
 		recipe.Vegan = vegan.Bool
 	}
@@ -204,27 +362,13 @@ func RecipeDetail(w http.ResponseWriter, r *http.Request){
 		util.HTTPServerError(w)
 		return
 	}
-	w.Write(jsonResponse)
-	
-	
-	
+	w.Write(jsonResponse)	
 }
 
-func RecipeFoodIngredientDetail(w http.ResponseWriter, r *http.Request){
-	id, err := getIDFromString(r.URL.String())
-	if err != nil{
-		util.ReturnBadRequest(w)
-		return
-	}
-	var stmt *sql.Stmt
-	stmt, err = db.DBCon.Prepare("SELECT iffr.amount, foi.name, foi.cal_per_100, foi.serving_unit FROM ingredients_from_foodingredient_from_recipe iffr INNER JOIN food_ingredient foi ON foi.id = iffr.foodingredient_id WHERE iffr.recipeid = $1;")
-	if err != nil{
-		logging.ErrorLogger(err, "routes/recipe.go", "recipeDetail")
-		util.HTTPServerError(w)
-		return
-	}
+func RecipeFoodIngredientDetail(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	id := ps.ByName("id")
 	var rows *sql.Rows
-	rows, err = stmt.Query(id)
+	rows, err := statements.GetFoodIngFromRecipeSTMT.Query(id)
 	
 	if err != nil{
 		logging.ErrorLogger(err, "routes/recipe.go", "recipeDetail")
@@ -236,30 +380,260 @@ func RecipeFoodIngredientDetail(w http.ResponseWriter, r *http.Request){
 	for rows.Next(){
 		ri := recipes.RecipeIngredientFromFoodIngredient{}
 		fi := recipes.FoodIngredient{}
-		err := rows.Scan(&ri.Amount, &fi.Name, &fi.CalsPer100, &fi.ServingUnit)
+		err := rows.Scan(&ri.ID, &ri.Amount, &fi.Name, &fi.CalsPer100, &fi.ServingUnit)
 		if err != nil {
 			logging.ErrorLogger(err, "routes/recipe.go", "recipeDetail")
 			return
 		}
 		ri.FoodIngredient = fi
 		iffr = append(iffr, ri)
-	}
-	
-	
-}
-func RecipeIngredientDetail(w http.ResponseWriter, r *http.Request){
-	id, err := getIDFromString(r.URL.String())
-	if err != nil{
-		util.ReturnBadRequest(w)
-		return
-	}
-	stmt, err := db.DBCon.Prepare("SELECT ingredient_title, ingredient_amount, ingredient_measurement FROM ingredients_from_recipe WHERE recipeid=$1;")
-	if err != nil{
+	}	
+	response, err := json.Marshal(iffr)
+	if err !=nil{
 		util.HTTPServerError(w)
 		return
 	}
-	rows, err := stmt.Query(id)
+	w.Write(response)
+
+}
+
+func checkIfRequesteeIsRecipeOwner(recipeID int64, requesteeID auth.UserID) error{
+	var OwnerID auth.UserID
+	row:=statements.CheckUserIsOwnerSTMT.QueryRow(recipeID)
+	err := row.Scan(&OwnerID)
+	if err != nil {
+		return fmt.Errorf("error scanning into row: %s", err.Error())
+	}
+	if OwnerID != requesteeID{
+		return fmt.Errorf("error: requestee is not owner")
+	}
+	return nil
+}
+
+func RecipeFoodIngredientCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	idString := ps.ByName("id")
+	id, err := getIDfromString(idString)
+	if err != nil {
+		util.ReturnBadRequest(w)
+		fmt.Println(err)
+		return
+	}
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		err = checkIfRequesteeIsRecipeOwner(id, derivedID)
+		if err != nil{
+			auth.ReturnUnauthorized(w)
+			return
+		}
+		fi := recipes.RecipeIngredientFromFoodIngredient{}
+		err := json.NewDecoder(r.Body).Decode(&fi)
+		if err != nil {
+			util.ReturnBadRequest(w)
+			fmt.Println(err)
+			return
+		}
+		var createdID int64
+
+		err = statements.RecipeFoodIngredientCreateSTMT.QueryRow(fi.Amount, id, fi.FoodIngredientID).Scan(&createdID)
+		if err != nil {
+			util.HTTPServerError(w)
+			fmt.Println(err)
+			return
+		}
+		fi.ID = createdID
+		response, err := json.Marshal(fi)
+		if err != nil {
+			util.HTTPServerError(w)
+			fmt.Println(err)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(response)
+
+	}else {
+		util.HTTPServerError(w)
+		fmt.Println("no id")
+		return
+	}
+}
+
+func RecipeMiscIngredientCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	idString := ps.ByName("id")
+	id, err := getIDfromString(idString)
+	if err != nil {
+		util.ReturnBadRequest(w)
+		fmt.Println(err)
+		return
+	}
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		err = checkIfRequesteeIsRecipeOwner(id, derivedID)
+		if err != nil{
+			auth.ReturnUnauthorized(w)
+			return
+		}
+		mi := recipes.Ingredient{}
+		err := json.NewDecoder(r.Body).Decode(&mi)
+		if err != nil {
+			util.ReturnBadRequest(w)
+			fmt.Println(err)
+			return
+		}
+		var createdID int64
+		err = statements.RecipeMiscIngredientCreateSTMT.QueryRow(id, mi.Measurement, mi.Amount, mi.Title).Scan(&createdID)
+		if err != nil {
+			util.HTTPServerError(w)
+			fmt.Println(err)
+			return
+		}		
+		mi.ID = createdID
+		jsonResponse, err := json.Marshal(mi)
+		if err != nil{
+			w.WriteHeader(200)
+			w.Write([]byte("created but json error"))
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write(jsonResponse)
+
+	}else {
+		util.HTTPServerError(w)
+		fmt.Println("no id")
+		return
+	}
+}
+func RecipeMiscIngredientDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	idString := ps.ByName("id")
+	id, err := getIDfromString(idString)
+	if err != nil {
+		util.ReturnBadRequest(w)
+		fmt.Println(err)
+		return
+	}
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		err = checkIfRequesteeIsRecipeOwner(id, derivedID)
+		if err != nil {
+			auth.ReturnUnauthorized(w)
+			return
+		}
+		miid := ps.ByName("miid")
+		_, err = statements.RecipeMiscIngredientDeleteSTMT.Exec(miid)
+		if err != nil {
+			util.HTTPServerError(w)
+			return
+		}
+		w.WriteHeader(200)
+
+	}else {
+		util.HTTPServerError(w)
+		fmt.Println("no id")
+		return
+	}
+}
+
+func RecipeFoodIngredientDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	idString := ps.ByName("id")
+	id, err := getIDfromString(idString)
+
+	if err != nil {
+		util.ReturnBadRequest(w)
+		fmt.Println(err)
+		return
+	}
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		err = checkIfRequesteeIsRecipeOwner(id, derivedID)
+		if err != nil {
+			auth.ReturnUnauthorized(w)
+			return
+		}
+		fiid := ps.ByName("fiid")
+		fmt.Println("fiid:", fiid)
+		_, err = statements.RecipeFoodIngredientDeleteSTMT.Exec(fiid)
+		if err != nil {
+			util.HTTPServerError(w)
+			return
+		}
+		w.WriteHeader(200)
+
+	}else {
+		util.HTTPServerError(w)
+		fmt.Println("no id")
+		return
+	}
+}
+
+func RecipeMethodStepDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	idString := ps.ByName("id")
+	id, err := getIDfromString(idString)
+	if err != nil {
+		util.ReturnBadRequest(w)
+		fmt.Println(err)
+		return
+	}
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		err = checkIfRequesteeIsRecipeOwner(id, derivedID)
+		if err != nil {
+			auth.ReturnUnauthorized(w)
+			return
+		}
+		methodid := ps.ByName("stepid")
+		_, err = statements.MethodStepDeleteSTMT.Exec(methodid)
+		if err != nil {
+			util.HTTPServerError(w)
+			return
+		}
+		w.WriteHeader(200)
+	}else {
+		util.HTTPServerError(w)
+		fmt.Println("no id")
+		return
+	}
+}
+
+func RecipeMethodStepCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	idString := ps.ByName("id")
+	id, err := getIDfromString(idString)
+	if err != nil {
+		util.ReturnBadRequest(w)
+		fmt.Println(err)
+		return
+	}
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		err = checkIfRequesteeIsRecipeOwner(id, derivedID)
+		if err != nil{
+			auth.ReturnUnauthorized(w)
+			return
+		}
+		var methodStep recipes.MethodStep
+		err := json.NewDecoder(r.Body).Decode(&methodStep)
+		if err != nil {
+			util.ReturnBadRequest(w)
+			fmt.Println(err)
+			return
+		}
+		methodStep.TimeStampAdded = time.Now()
+		var methodID int64
+		err = statements.MethodStepCreateSTMT.QueryRow(id, methodStep.StepDescription, methodStep.TimeStampAdded, methodStep.DurationInMinutes).Scan(&methodID)
+		if err != nil {
+			util.HTTPServerError(w)
+			fmt.Println(err)
+			return
+		}
+		methodStep.ID = methodID
+		jsonResponse, _ := json.Marshal(methodStep)
+		w.WriteHeader(http.StatusOK)
+		w.Write(jsonResponse)
+	}else {
+		util.HTTPServerError(w)
+		fmt.Println("no id")
+		return
+	}
+}
+
+
+func RecipeIngredientDetail(w http.ResponseWriter, r *http.Request, p httprouter.Params){
+	id := p.ByName("id")
+	rows, err := statements.GetMiscIngFromRecipeSTMT.Query(id)
 	if err != nil{
+		fmt.Println(err)
 		util.HTTPServerError(w)
 		return
 	}
@@ -267,36 +641,35 @@ func RecipeIngredientDetail(w http.ResponseWriter, r *http.Request){
 	miscIng := recipes.IngredientsMisc{}
 	for rows.Next(){
 		var ing recipes.Ingredient
-		rows.Scan(&ing.Title, &ing.Amount, &ing.Measurement)		
+		err := rows.Scan(&ing.ID, &ing.Title, &ing.Amount, &ing.Measurement)		
+		if err != nil{
+			fmt.Println(err)
+			return
+		}
 		miscIng = append(miscIng, ing)
 	}
-	
+	response, err := json.Marshal(miscIng)
+	if err !=nil{
+		util.HTTPServerError(w)
+		return
+	}
+	w.Write(response)
 }
 
-func RecipeMethodDetail(w http.ResponseWriter, r *http.Request){
-	id, err := getIDFromString(r.URL.String())
+func RecipeMethodDetail(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	id := ps.ByName("id")
+	rows, err := statements.GetMethodFromRecipeSTMT.Query(id)
 	if err != nil{
-		util.ReturnBadRequest(w)
-		return
-	}
-	stmt, err := db.DBCon.Prepare("SELECT method FROM methods_from_recipe WHERE recipeid=$1;")
-	if err != nil{
-		util.HTTPServerError(w)
-		return
-	}
-	rows, err := stmt.Query(id)
-	if err != nil{
-		util.HTTPServerError(w)
+		util.ReturnNotFound(w)
 		return
 	}
 	defer rows.Close()
-	methods:=recipes.MethodFromRecipe{}
+	methods:= []recipes.MethodStep{}
 	for rows.Next(){
-		var met string
-		rows.Scan(&met)		
-		methods = append(methods, met)
+		var step recipes.MethodStep
+		rows.Scan(&step.ID, &step.StepDescription, &step.TimeStampAdded, &step.DurationInMinutes)		
+		methods = append(methods, step)
 	}
-	
 	response, err := json.Marshal(methods)
 	if err !=nil{
 		util.HTTPServerError(w)
@@ -312,12 +685,8 @@ type createdResponse struct{
 }
 
 
-func CreateRecipeView(w http.ResponseWriter, r *http.Request){
-	if !util.CheckIfMethodAllowed(w, r, []string{"POST"}){
-		return
-	}
+func CreateRecipeView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
 	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
-		//file := r.ParseMultipartForm(10<<20)
 		var parsedRequest recipes.Recipe
 		err := json.NewDecoder(r.Body).Decode(&parsedRequest)
 		if err != nil{
@@ -329,7 +698,6 @@ func CreateRecipeView(w http.ResponseWriter, r *http.Request){
 			util.ReturnBadRequest(w)
 			return
 		}
-		fmt.Println(parsedRequest)
 		var stmt *sql.Stmt	
 		stmt, err = db.DBCon.Prepare("INSERT INTO recipes (owner, title, description, source, type_of_meal) VALUES($1, $2, $3, '/', $4) RETURNING id;")
 		if err != nil{
@@ -357,19 +725,11 @@ func CreateRecipeView(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-type recipeIDrequest struct{
-	ID int64
-}
 
-func RecipeBannerView(w http.ResponseWriter, r *http.Request){
-	request := recipeIDrequest{}
-	err := json.NewDecoder(r.Body).Decode(&request)
-	if err != nil{
-		fmt.Println(err)
-		util.ReturnBadRequest(w)
-		return
-	}
-	id:=request.ID
+
+func RecipeBannerView(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	
+	id:=ps.ByName("id")
 	r.ParseMultipartForm(10 << 20)
 	file, handler, err := r.FormFile("banner")
 	if err != nil{
@@ -382,11 +742,10 @@ func RecipeBannerView(w http.ResponseWriter, r *http.Request){
 	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
     fmt.Printf("File Size: %+v\n", handler.Size)
     fmt.Printf("MIME Header: %+v\n", handler.Header)
-
 }
 
 
-func GetAllFoodIngredientsView(w http.ResponseWriter, r *http.Request){
+func GetAllFoodIngredientsView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
 	if !util.CheckIfMethodAllowed(w, r, []string{"GET"}){
 		return
 	}
@@ -400,11 +759,11 @@ func GetAllFoodIngredientsView(w http.ResponseWriter, r *http.Request){
 	} else{
 		querystring += " LIMIT 20;"
 	}
-	fmt.Println(querystring)
+	// fmt.Println(querystring)
 	stmt, err := db.DBCon.Prepare(querystring)
 	if err != nil {
 		logging.ErrorLogger(err, "routes/recipe.go", "GetAllFoodIngredientsView")		
-		util.HTTPServerError(w)
+		util.ReturnNotFound(w)
 		return
 	}
 	var rows *sql.Rows
@@ -436,4 +795,126 @@ func GetAllFoodIngredientsView(w http.ResponseWriter, r *http.Request){
 	}
 	w.Header().Add("Content-Type", "application/json")
 	w.Write(resp)
+}
+
+
+
+func AddToFavView(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		recipeidString:=ps.ByName("id")
+		recipeid, err := getIDfromString(recipeidString)
+		if err != nil{
+			util.ReturnBadRequest(w)
+			return 
+		}
+		liked, err := checkIfLikedByUser(int64(derivedID), recipeid)
+		if err != nil{
+			util.HTTPServerError(w)
+			fmt.Println(err)
+			return
+		}
+		if liked{
+			util.ReturnBadRequest(w)
+			return
+		}
+		_, err = statements.AddToFavSTMT.Exec(recipeid, derivedID)
+		if err != nil {
+			util.HTTPServerError(w)
+			return
+		}
+		w.WriteHeader(200)
+
+	} else{
+		auth.ReturnUnauthorized(w)
+		return
+	}
+	
+}
+
+
+func RemoveFromFavView(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		recipeidString:=ps.ByName("id")
+		recipeid, err := getIDfromString(recipeidString)
+		if err != nil{
+			util.ReturnBadRequest(w)
+			fmt.Println(err)
+			return 
+		}
+		liked, err := checkIfLikedByUser(int64(derivedID), recipeid)
+		if err != nil{
+			util.HTTPServerError(w)
+			fmt.Println(err)
+			return
+		}
+		if liked{
+			_, err = statements.RemoveFromFavSTMT.Exec(derivedID, recipeid)
+			if err != nil {
+				util.HTTPServerError(w)
+				fmt.Println(err)
+				return
+			}
+			w.WriteHeader(200)
+			return
+		} else {
+			util.ReturnBadRequest(w)
+			fmt.Println("not even liked ya doofus")
+			return
+		}
+	} else{
+		auth.ReturnUnauthorized(w)
+		return
+	}
+
+
+}
+
+func IsLikedByUserView(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		recipeStringID := ps.ByName("id")
+		recipeid, err := getIDfromString(recipeStringID)
+		if err != nil{
+			util.ReturnBadRequest(w)
+			return 
+		}
+		liked, err := checkIfLikedByUser(int64(derivedID), recipeid)
+		if err != nil{
+			util.HTTPServerError(w)
+			fmt.Println(err)
+			return
+		}
+		if liked{
+			w.WriteHeader(200)
+			return
+		}else{
+			w.WriteHeader(404)
+			return
+		}
+
+	} else{
+		auth.ReturnUnauthorized(w)
+		return
+	}
+}
+
+type LikesStruct struct{
+	Likes int64
+}
+
+
+
+func GetAllLikesFromRecipeView (w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	recipeStringID := ps.ByName("id")
+	recipeid, err := getIDfromString(recipeStringID)
+	if err != nil{
+		util.ReturnBadRequest(w)
+		return 
+	}
+	jsonResponse, err := getAllLikesFromRecipe(recipeid)
+	if err != nil {
+		util.HTTPServerError(w)
+		fmt.Println(err)
+		return
+	}
+	w.Write(jsonResponse)
 }

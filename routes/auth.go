@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/julienschmidt/httprouter"
 	"github.com/unexpectedtokens/mealr/auth"
 	db "github.com/unexpectedtokens/mealr/database"
 	"github.com/unexpectedtokens/mealr/logging"
@@ -32,10 +33,7 @@ func generateJWTPayload(token tokens.AuthToken) ([]byte, error){
 }
 
 // RegisterView is a function to register a user
-func RegisterView(w http.ResponseWriter, r *http.Request){
-	if !util.CheckIfMethodAllowed(w, r, []string{"POST"}){
-		return
-	}
+func RegisterView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
 	user, err := auth.DecodeRequestBodyIntoUser(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -83,10 +81,8 @@ func RegisterView(w http.ResponseWriter, r *http.Request){
 }
 
 //LoginView is a function to check if user exists and then if the password is correct
-func LoginView(w http.ResponseWriter, r *http.Request){
-	if !util.CheckIfMethodAllowed(w, r, []string{"POST"}){
-		return
-	}
+func LoginView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
+	fmt.Println("hit")
 	user, err := auth.DecodeRequestBodyIntoUser(r)
 	if err != nil {
 		defer logging.ErrorLogger(err, "routes/auth.go", "LoginView")
@@ -139,7 +135,7 @@ func LoginView(w http.ResponseWriter, r *http.Request){
 }
 
 //RefreshView is called when an authtoken has expired
-func RefreshView(w http.ResponseWriter, r *http.Request){
+func RefreshView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
 	if !util.CheckIfMethodAllowed(w, r, []string{"POST"}){
 		return
 	}
@@ -148,8 +144,6 @@ func RefreshView(w http.ResponseWriter, r *http.Request){
 		return
 	}	
 	token := r.Header["Authorization"][0]
-	tokenString := string(token)
-	fmt.Println(tokenString)	
 	rt, err:=tokens.GetToken(tokens.AuthToken(token))
 	if err != nil{
 		defer logging.ErrorLogger(fmt.Errorf("something went wrong getting refreshtoken from db: %s", err.Error()), "routes/auth.go", "RefreshView")
@@ -182,11 +176,12 @@ func RefreshView(w http.ResponseWriter, r *http.Request){
 
 
 //ChangeUserView is a function to change the users password
-func ChangeUserView(w http.ResponseWriter, r *http.Request, id interface{}){
+func ChangeUserView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
 	if !util.CheckIfMethodAllowed(w, r, []string{"PUT"}){
 		util.ReturnBadRequest(w)
 		return 
 	}
+	id := 2
 	if user, err := auth.DecodeRequestBodyIntoUser(r); err == nil{
 		r.Context().Value(user)
 		if user.Validate(){
@@ -195,7 +190,6 @@ func ChangeUserView(w http.ResponseWriter, r *http.Request, id interface{}){
 	}else{
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
-	
 	w.Write([]byte("200"))	
 }
 
@@ -205,14 +199,13 @@ type SafeUserResponse struct {
 		Email string
 }
 //GetUserView gets a user from the db and returns it
-func GetUserView(w http.ResponseWriter, r *http.Request){
+func GetUserView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
 	if !util.CheckIfMethodAllowed(w, r, []string{"GET"}){
 		util.ReturnBadRequest(w)
 		return 
 	}
 	
 	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID);ok{
-		fmt.Println(derivedID)
 		if derivedID == 0{
 			util.ReturnBadRequest(w)
 			return
@@ -245,7 +238,7 @@ func GetUserView(w http.ResponseWriter, r *http.Request){
 // }
 
 
-func LogOutView(w http.ResponseWriter, r *http.Request){
+func LogOutView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
 	if !util.CheckIfMethodAllowed(w, r, []string{"POST"}){
 		return
 	}

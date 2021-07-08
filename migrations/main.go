@@ -9,23 +9,25 @@ import (
 )
 
 //RunMigrations runs the migrations in the migrations.sql file
-func RunMigrations() error{
+func RunMigrations(filename string) error{
 	defer func(){
 		if r := recover(); r !=nil{
 			fmt.Println(r)
 		}
 	}()
+	
 	db.InitDB()
 	defer db.DBCon.Close()
-	file, err := ioutil.ReadFile("migrations/migrations.sql")
+	file, err := ioutil.ReadFile(fmt.Sprintf("migrations/migration_files/%s.sql", filename))
 	if err != nil{
 		panic(err)
 
 	}
+	fmt.Printf("Running migrations from %s\n", filename)
 	_, err = db.DBCon.Exec(string(file))
 	if err != nil {
 		logging.ErrorLogger(err, "migrations/main.go", "RunMigrations")
-		panic(err)
+		panic(fmt.Errorf("error migrating: %s", err.Error()))
 	}
 	fmt.Println("[SUCCES]: Migrations ran succesfully")
 	return nil
