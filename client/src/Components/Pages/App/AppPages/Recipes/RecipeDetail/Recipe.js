@@ -1,19 +1,14 @@
 import { useEffect, useState } from "react";
 import config from "../../../../../../Config/config";
 import {
-  Box,
-  Button,
   Card,
-  CardContent,
   Container,
   CircularProgress,
   Grow,
-  Link,
   makeStyles,
-  Typography,
   Grid,
 } from "@material-ui/core";
-import { AccessTimeOutlined, FlashOnOutlined } from "@material-ui/icons";
+
 import { useHistory, useRouteMatch } from "react-router";
 import { useSnackbar } from "notistack";
 import { useQuery } from "react-query";
@@ -49,6 +44,9 @@ function Recipe({
 }) {
   const { enqueueSnackbar } = useSnackbar();
   const [totalTime, setTotalTime] = useState(0);
+  const [totalCalories, setTotalCalories] = useState(0);
+  const [totalWeight, setTotalWeight] = useState(0);
+  const [useablePercentage, setUseablePercentage] = useState(0);
   const history = useHistory();
   const { params } = useRouteMatch();
   const [userIsOwner, setUserIsOwner] = useState(false);
@@ -81,8 +79,6 @@ function Recipe({
       setUserIsOwner(data.Owner.username === userInfo.username);
     }
   }, [data, userInfo, isLoading, isError, history]);
-  //console.log(data);
-  console.log(totalTime);
   return (
     <>
       {isLoading ? (
@@ -126,25 +122,24 @@ function Recipe({
                       recipeid={params.id}
                       addToFavs={addToFavs}
                       removeFromFavs={removeFromFavs}
+                      totalTime={totalTime}
+                      totalWeight={totalWeight}
+                      description={data.Description}
+                      totalCalories={totalCalories}
+                      useablePercentage={useablePercentage}
                       handleAuthenticatedEndpointRequest={
                         handleAuthenticatedEndpointRequest
                       }
                     />
                   </Grid>
-                  <Grid item md={12} lg={12} xs={12} sm={12}>
+                  {/* <Grid item md={12} lg={12} xs={12} sm={12}>
                     <Grow in={true}>
-                      <Box py={2}>
-                        <Card>
-                          <CardContent>
-                            <Typography variant="h6">Description</Typography>
-                            <Typography>
-                              {data.Description ? data.Description : "-"}
-                            </Typography>
-                          </CardContent>
-                        </Card>
-                      </Box>
+                      <Description
+                        description={data.Description}
+                        recipeid={params.id}
+                      />
                     </Grow>
-                  </Grid>
+                  </Grid>*/}
                 </Grid>
 
                 <Grid item container spacing={2}>
@@ -152,6 +147,9 @@ function Recipe({
                     <Ingredients
                       userIsOwner={userIsOwner}
                       recipeid={params.id}
+                      setTotalCalories={setTotalCalories}
+                      setTotalWeight={setTotalWeight}
+                      setUseablePercentage={setUseablePercentage}
                       handleAuthenticatedEndpointRequest={
                         handleAuthenticatedEndpointRequest
                       }

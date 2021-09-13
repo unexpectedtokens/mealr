@@ -9,13 +9,18 @@ import {
   ListItemSecondaryAction,
   IconButton,
 } from "@material-ui/core";
-import { AccessTimeRounded, DeleteOutlined } from "@material-ui/icons";
+import {
+  AccessTimeRounded,
+  DeleteOutlined,
+  EditOutlined,
+} from "@material-ui/icons";
 
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "react-query";
 import config from "../../../../../../Config/config";
 import Confirm from "../../../../../Reusables/App/Confirm";
 import MethodStepAdder from "./MethodAdder";
+import MethodAlterer from "./MethodAlterer";
 
 const Methods = ({
   recipeid,
@@ -24,8 +29,10 @@ const Methods = ({
   setTotalTime,
 }) => {
   const [showMethodStepAdder, setShowMethodStepAdder] = useState(false);
+  const [showMethodStepUpdater, setShowMethodStepUpdater] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [idToDelete, setIDToDelete] = useState(0);
+  const [idToAlter, setIDToAlter] = useState(0);
+  const [stepToAlter, setStepToAlter] = useState({});
   const client = useQueryClient();
   const fetchMethodSteps = async () => {
     const response = await fetch(
@@ -39,21 +46,34 @@ const Methods = ({
     fetchMethodSteps
   );
   const handleDeleteButtonClicked = (id) => {
-    setIDToDelete(id);
+    setIDToAlter(id);
     setShowConfirm(true);
   };
+
+  const handleUpdateButtonClicked = (id) => {
+    const step = data.filter((x) => x.ID === id)[0];
+    if (step) {
+      setStepToAlter(step);
+      console.log("step", step);
+      setShowMethodStepUpdater(true);
+    } else {
+      console.log(
+        `something went wrong: no step selected. id: ${id}, data: ${data}`
+      );
+    }
+  };
+
   const deleteItem = async () => {
     const response = await handleAuthenticatedEndpointRequest(
-      `${config.API_URL}/api/recipes/detail/${recipeid}/method/${idToDelete}`,
+      `${config.API_URL}/api/recipes/detail/${recipeid}/method/${idToAlter}`,
       "DELETE"
     );
     if (response.status === 200) {
       client.setQueryData("methodSteps", (old) =>
-        old.filter((x) => x.ID !== idToDelete)
+        old.filter((x) => x.ID !== idToAlter)
       );
     }
-
-    //console.log(response);
+    setShowConfirm(false);
   };
   useEffect(() => {
     if (!isError && !isLoading) {
@@ -66,12 +86,11 @@ const Methods = ({
   }, [isError, isLoading, data, client, setTotalTime]);
 
   useEffect(() => {
+    setTotalTime(0);
     let totalMinutes = 0;
-    if (!isError && !isLoading) {
-      data.forEach((m) => (totalMinutes += m.DurationInMinutes));
-    }
+    data?.forEach((m) => (totalMinutes += parseFloat(m.DurationInMinutes)));
     setTotalTime(totalMinutes);
-  }, [isError, isLoading, data, setTotalTime]);
+  });
   return (
     <>
       <Backdrop open={showMethodStepAdder} style={{ zIndex: 1001 }}>
@@ -79,10 +98,25 @@ const Methods = ({
           handleAuthenticatedEndpointRequest={
             handleAuthenticatedEndpointRequest
           }
+          buttonText="add method step"
+          firstInputName="new step"
           recipeid={recipeid}
           hide={() => setShowMethodStepAdder(false)}
         />
       </Backdrop>
+      <Backdrop open={showMethodStepUpdater} style={{ zIndex: 1001 }}>
+        <MethodAlterer
+          handleAuthenticatedEndpointRequest={
+            handleAuthenticatedEndpointRequest
+          }
+          stepid={stepToAlter.ID}
+          curStepDuration={stepToAlter.DurationInMinutes}
+          curStepDescription={stepToAlter.StepDescription}
+          recipeid={recipeid}
+          hide={() => setShowMethodStepUpdater(false)}
+        />
+      </Backdrop>
+
       <Confirm
         hide={() => setShowConfirm(false)}
         itemName="step"
@@ -132,6 +166,11 @@ const Methods = ({
                           {userIsOwner ? (
                             <ListItemSecondaryAction>
                               <IconButton
+                                onClick={() => handleUpdateButtonClicked(x.ID)}
+                              >
+                                <EditOutlined />
+                              </IconButton>
+                              <IconButton
                                 onClick={() => handleDeleteButtonClicked(x.ID)}
                               >
                                 <DeleteOutlined />
@@ -155,7 +194,6 @@ const Methods = ({
                   color="primary"
                   onClick={() => {
                     setShowMethodStepAdder(true);
-                    console.log("yuaas");
                   }}
                 >
                   Add Method Step

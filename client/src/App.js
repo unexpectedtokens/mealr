@@ -18,7 +18,7 @@ function App() {
   });
 
   const refreshToken = (Key = auth.Key) => {
-    console.log("attemtping refresh with", Key);
+    //console.log("attemtping refresh with", Key);
     return new Promise(async (resolve, reject) => {
       try {
         const response = await fetch(`${config.API_URL}/auth/refresh/`, {
@@ -31,7 +31,7 @@ function App() {
           throw new Error("not authorized");
         }
         const data = await response.json();
-        console.log("refresh succesful, key:", data.Key);
+        //console.log("refresh succesful, key:", data.Key);
         return resolve(data.Key);
       } catch (e) {
         return reject("not authorized");
@@ -48,7 +48,7 @@ function App() {
       setTimeout(() => {
         attemptRefreshOrReAuth(newKey);
       }, 3300000);
-      console.log("newkey:", newKey);
+      //console.log("newkey:", newKey);
       localStorage.setItem("Key", newKey);
       setAuth({ isAuthenticated: true, Key: newKey });
       setLoading(false);
@@ -61,7 +61,7 @@ function App() {
       setLoading(false);
     }
   };
-  console.log(auth);
+  //console.log(auth);
   useEffect(() => {
     const Key = localStorage.getItem("Key");
     if (Key != null) {

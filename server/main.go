@@ -44,6 +44,7 @@ func handleRequests(){
 	router.DELETE("/api/recipes/detail/:id/deletemi/:miid", applyMiddleware(routes.RecipeMiscIngredientDelete, middleware.AuthorizeMiddleware))
 	router.DELETE("/api/recipes/detail/:id/deletefi/:fiid", applyMiddleware(routes.RecipeFoodIngredientDelete, middleware.AuthorizeMiddleware))
 	router.DELETE("/api/recipes/detail/:id/method/:stepid", applyMiddleware(routes.RecipeMethodStepDelete, middleware.AuthorizeMiddleware))
+	router.PATCH("/api/recipes/detail/:id/method/:stepid", applyMiddleware(routes.RecipeMethodStepUpdateView, middleware.AuthorizeMiddleware))
 	router.POST("/api/recipes/detail/:id/fi", applyMiddleware(routes.RecipeFoodIngredientCreate, middleware.AuthorizeMiddleware))
 	router.GET("/api/recipes/detail/:id/fi/", applyMiddleware(routes.RecipeFoodIngredientDetail))
 	router.GET("/api/recipes/detail/:id/method/", applyMiddleware(routes.RecipeMethodDetail))
@@ -51,7 +52,8 @@ func handleRequests(){
 	router.GET("/api/recipes/listfav/", applyMiddleware(routes.FetchFavouriteRecipes, middleware.AuthorizeMiddleware))
 	router.GET("/api/recipes/listmine/", applyMiddleware(routes.MyRecipes, middleware.AuthorizeMiddleware))
 	router.GET("/api/recipes/detail/:id", applyMiddleware(routes.RecipeDetail))
-	router.GET("/api/recipes/create/", applyMiddleware(routes.CreateRecipeView, middleware.AuthorizeMiddleware))
+	router.PATCH("/api/recipes/detail/:id", applyMiddleware(routes.UpdateRecipeView, middleware.AuthorizeMiddleware))
+	router.POST("/api/recipes/create/", applyMiddleware(routes.CreateRecipeView, middleware.AuthorizeMiddleware))
 	router.GET("/api/recipes/addbanner/", applyMiddleware(routes.RecipeBannerView, middleware.AuthorizeMiddleware))
 	router.GET("/api/recipes/allingredients/", applyMiddleware(routes.GetAllFoodIngredientsView))
 	router.POST("/api/recipes/like/:id", applyMiddleware(routes.AddToFavView, middleware.AuthorizeMiddleware))
@@ -74,11 +76,11 @@ func handleRequests(){
 	//PROFILE RELATED
 	router.GET("/api/profile/getactivityoptions/", applyMiddleware(routes.ActivityOptionsView))
 	router.GET("/api/profile/", applyMiddleware(routes.GetProfileView, middleware.AuthorizeMiddleware))
-	router.GET("/api/profile/update/", applyMiddleware(routes.UpdateProfileView, middleware.AuthorizeMiddleware))
+	router.PUT("/api/profile/update/", applyMiddleware(routes.UpdateProfileView, middleware.AuthorizeMiddleware))
 	router.GET("/api/profile/isvalid/", applyMiddleware(routes.ProfileValidForMealPlanGeneratorView, middleware.AuthorizeMiddleware))
 	router.GET("/site/*path", serveSPA)
 	router.NotFound = http.FileServer(http.Dir("./client/build"))
-
+	router.GET("/ws_test", routes.MealPlanConnect)
 	//CORS SETTINGS
 	_cors := cors.Options{
         AllowedMethods: []string{"POST", "OPTIONS", "GET", "PUT", "UPDATE", "PATCH", "HEAD", "DELETE"},
@@ -112,3 +114,6 @@ func HTTPServer(){
 	go auth.TokenCleanup()
 	handleRequests()	
 }
+
+
+

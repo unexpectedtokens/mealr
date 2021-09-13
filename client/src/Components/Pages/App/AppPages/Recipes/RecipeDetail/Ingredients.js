@@ -11,13 +11,16 @@ import {
 } from "@material-ui/core";
 import { DeleteOutlined } from "@material-ui/icons";
 import config from "../../../../../../Config/config";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import IngAdder from "./IngAdder";
 import { useQuery, useQueryClient } from "react-query";
 const Ingredients = ({
   recipeid,
   userIsOwner,
   handleAuthenticatedEndpointRequest,
+  setTotalCalories,
+  setUseablePercentage,
+  setTotalWeight,
 }) => {
   const client = useQueryClient();
   const [showIngAdder, setShowIngAdder] = useState(false);
@@ -69,7 +72,6 @@ const Ingredients = ({
       } else {
         console.log("nono");
       }
-      console.log(response);
     } catch (e) {
       console.log(e);
     }
@@ -95,6 +97,34 @@ const Ingredients = ({
     miQuery.refetch();
     fiQuery.refetch();
   };
+
+  useEffect(() => {
+    if (!error && !loading) {
+      const fi = fiQuery.data;
+      const mi = miQuery.data;
+      const totalLength = mi.length + fi.length;
+      const calculatablePercentace = (fi.length / totalLength) * 100;
+      let totalCalories = 0;
+      let totalWeight = 0;
+      fi.forEach((x) => {
+        totalCalories += (x.Amount / 100) * x.CalsPer100;
+        //if (x.ServingUnit === "g") {
+        totalWeight += x.Amount;
+        //}
+      });
+      setTotalCalories(totalCalories);
+      setUseablePercentage(calculatablePercentace);
+      setTotalWeight(totalWeight);
+    }
+  }, [
+    error,
+    loading,
+    fiQuery.data,
+    miQuery.data,
+    setTotalCalories,
+    setUseablePercentage,
+    setTotalWeight,
+  ]);
   return (
     <>
       <Backdrop open={showIngAdder} style={{ zIndex: 1001 }}>

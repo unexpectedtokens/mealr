@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gorilla/websocket"
+	"github.com/julienschmidt/httprouter"
 	"github.com/unexpectedtokens/mealr/auth"
 	"github.com/unexpectedtokens/mealr/calories"
 	db "github.com/unexpectedtokens/mealr/database"
@@ -255,3 +257,41 @@ func PlanGet(w http.ResponseWriter, r *http.Request){
 // 	// fmt.Println(hits)
 // 	}
 // }
+
+
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+    WriteBufferSize: 1024,
+}
+
+func MealPlanConnect(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
+	upgrader.CheckOrigin = func(r *http.Request) bool {
+		fmt.Println("incoming request from:", r.URL)
+		return true
+	}
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		util.HTTPServerError(w)
+		fmt.Println(err)
+		return
+	}
+	ws.WriteMessage(1, []byte("connected"))
+	reader(ws)
+	
+}
+
+func reader (conn *websocket.Conn){
+	var vegan bool
+	var vegetarian bool
+	
+	for{
+		fmt.Println(vegan, vegetarian)
+		messageType, p, err := conn.ReadMessage()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(messageType)
+		conn.WriteMessage(websocket.TextMessage, p)
+	}
+}

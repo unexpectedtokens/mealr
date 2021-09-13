@@ -24,7 +24,6 @@ function Home({ navigate, validForMG, loading, userInfo, setActiveRoute }) {
     setActiveRoute("home");
     //eslint-disable-next-line
   }, []);
-  console.log(validForMG);
   return (
     <>
       <Helmet>

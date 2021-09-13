@@ -26,7 +26,6 @@ function Profile({
         `${config.API_URL}/api/profile/`,
         "GET"
       );
-      console.log(response);
       return response.json();
     } catch (e) {
       console.log("Something went wrong fetching profile:", e);

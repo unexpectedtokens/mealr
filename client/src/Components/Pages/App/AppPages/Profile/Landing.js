@@ -52,7 +52,6 @@ const ProfileLanding = ({ data, userInfo, validForMG, path }) => {
     }
     return age;
   };
-  console.log(data);
   return (
     <Container maxWidth="md">
       <Paper className={classes.profileContainer}>

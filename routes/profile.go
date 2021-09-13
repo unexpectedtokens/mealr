@@ -16,9 +16,7 @@ import (
 // UpdateProfileView updates an existing
 func UpdateProfileView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
 	
-	if !util.CheckIfMethodAllowed(w, r, []string{"PUT", "UPDATE"}){
-		return
-	}
+
 	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
 		newProfile := profiles.Profile{}
 		profile := profiles.Profile{}

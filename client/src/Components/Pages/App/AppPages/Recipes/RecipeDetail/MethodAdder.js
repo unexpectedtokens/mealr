@@ -8,6 +8,8 @@ const MethodStepAdder = ({
   recipeid,
   hide,
   handleAuthenticatedEndpointRequest,
+  buttonText,
+  firstInputName,
 }) => {
   const [newMethodStep, setNewMethodStep] = useState("");
   const [duration, setDuration] = useState(0);
@@ -28,10 +30,9 @@ const MethodStepAdder = ({
           StepDescription: newMethodStep,
         })
       );
-      console.log(response);
       const data = await response.json();
       client.setQueryData("methodSteps", (old) => [...old, data]);
-      console.log(data);
+      enqueueSnackbar("Succesfully added a new step", { variant: "success" });
     } catch (e) {
       console.log(e);
     }
@@ -53,7 +54,7 @@ const MethodStepAdder = ({
           value={newMethodStep}
           fullWidth
           variant="outlined"
-          label="New step"
+          label={firstInputName}
         />
         <Box p={2}>
           <TextField
@@ -79,7 +80,7 @@ const MethodStepAdder = ({
             style={{ fontWeight: 700 }}
             onClick={handleNewMethodStepAddition}
           >
-            Add method step
+            {buttonText}
           </Button>
         </Box>
       </Box>

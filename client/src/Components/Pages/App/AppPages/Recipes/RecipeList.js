@@ -6,8 +6,7 @@ import {
   Typography,
 } from "@material-ui/core";
 import { useSnackbar } from "notistack";
-import { useEffect, useState } from "react";
-import { useInfiniteQuery, useQuery, useQueryClient } from "react-query";
+import { useInfiniteQuery, useQueryClient } from "react-query";
 import { useHistory } from "react-router-dom";
 import RecipeCard from "./RecipeCard";
 import { Fragment } from "react";

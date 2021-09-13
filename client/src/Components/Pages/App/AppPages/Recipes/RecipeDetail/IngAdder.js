@@ -47,6 +47,7 @@ const IngAdder = ({
   const [focus, setFocus] = useState(true);
   const [amount, setAmount] = useState(0);
   const [loading, setLoading] = useState(false);
+
   const classes = useStyles();
   const timer = useRef(null);
   const [newIngredient, setNewIngredient] = useState({
@@ -80,6 +81,7 @@ const IngAdder = ({
     } else {
       setSuggestions([]);
     }
+    new WebSocket();
   };
 
   const handleHide = () => {
@@ -106,11 +108,8 @@ const IngAdder = ({
           FoodIngredientID: selectedIngredient.ID,
         })
       );
-      console.log(response);
       const data = await response.json();
-      console.log(data);
       client.setQueryData("foodIngredients", (old) => [...old, data]);
-      console.log(client.getQueryData("foodIngredients"));
       handleHide();
       setLoading(false);
     } catch (e) {
@@ -125,7 +124,6 @@ const IngAdder = ({
     // });
   };
   const handleMiscIngredientAddition = async () => {
-    console.log(newIngredient);
     setLoading(true);
     try {
       const response = await handleAuthenticatedEndpointRequest(
@@ -137,11 +135,8 @@ const IngAdder = ({
           Amount: newIngredient.amount,
         })
       );
-      console.log(response);
       const data = await response.json();
-      console.log(data);
       client.setQueryData("miscIngredients", (old) => [...old, data]);
-      console.log(client.getQueryData("miscIngredients"));
       handleHide();
       setLoading(false);
     } catch (e) {

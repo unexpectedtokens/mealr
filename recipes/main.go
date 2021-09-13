@@ -53,6 +53,7 @@ type Recipe struct{
 	TypeOfMeal string
 	LikeByUser bool
 	Likes int
+	Public bool
 }
 
 type RecipeFoodIngredientList []RecipeIngredientFromFoodIngredient
@@ -96,7 +97,19 @@ type Mealplan struct{
 	Days []DayInPlan
 }
 
+func CalcPercentage(part, whole int) (percentageNotCalculated float32){
+	percentageNotCalculated = float32(part) / float32(whole) * 100.0
+	return
+}
 
+func CalculateCaloriesFromRecipe(fi RecipeFoodIngredientList) (amountOfCalories int){
+	
+	for _, x := range fi{
+		amountOfCaloriesFloat := x.Amount / 100.0 * float64(x.CalsPer100)
+		amountOfCalories += int(amountOfCaloriesFloat)
+	}
+	return
+}
 //bulkinsert recipe ingredients snippet
 // func BulkInsert(unsavedRows []*ExampleRowStruct) error {
 //     valueStrings := make([]string, 0, len(unsavedRows))

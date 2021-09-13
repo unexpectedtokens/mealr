@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS recipes(
 	cals_per_serving INT,
 	serving_size int,
 	type_of_meal VARCHAR(9) NOT NULL,
-	public BOOLEAN NOT NULL DEFAULT 'f'
+	public BOOLEAN NOT NULL DEFAULT 't'
 );
 
 CREATE TABLE IF NOT EXISTS favourites(
