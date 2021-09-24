@@ -81,7 +81,6 @@ const IngAdder = ({
     } else {
       setSuggestions([]);
     }
-    new WebSocket();
   };
 
   const handleHide = () => {

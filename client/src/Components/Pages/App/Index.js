@@ -115,21 +115,28 @@ function Main({ setAuth, auth, refreshOn404 }) {
     }
   };
 
-  const handleAuthenticatedEndpointRequest = (endpoint, type, body = "") => {
-    // console.log(
-    //   `Attempting endpoint fetch at ${endpoint}, method: ${type}, with key ${
-    //     auth.Key
-    //   } ${body ? body : ""}`
-    // );
+  const handleAuthenticatedEndpointRequest = (
+    endpoint,
+    type,
+    body = "",
+    contentType = "application/json"
+  ) => {
+    console.log(
+      `Attempting endpoint fetch at ${endpoint}, method: ${type}, with key ${
+        auth.Key
+      } content-type: ${contentType}, body: ${body ? body : ""}`
+    );
     return new Promise(async (resolve, reject) => {
       try {
         const callParams = {
           method: type,
           headers: {
             Authorization: auth.Key,
-            "Content-Type": "application/json",
           },
         };
+        if (contentType === "application/json") {
+          callParams.headers["Content-Type"] = contentType;
+        }
         if (body) {
           callParams["body"] = body;
         }

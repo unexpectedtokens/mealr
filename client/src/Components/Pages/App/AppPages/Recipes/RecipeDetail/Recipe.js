@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import config from "../../../../../../Config/config";
+import { EditOutlined } from "@material-ui/icons";
+
 import {
+  Box,
   Card,
   Container,
   CircularProgress,
   Grow,
   makeStyles,
   Grid,
+  IconButton,
+  Backdrop,
 } from "@material-ui/core";
 
 import { useHistory, useRouteMatch } from "react-router";
@@ -16,11 +21,25 @@ import PlaceHolderImage from "../../../../../../assets/images/pexels-anna-tukhfa
 import Ingredients from "./Ingredients";
 import Methods from "./Methods";
 import RecipeMainInfo from "./RecipeMainInfo";
+import ImageUpload from "./ImageUpload";
 
 const useStyles = makeStyles((theme) => ({
   RecipeImage: {
     width: "100%",
     transform: "scale(1.05)",
+    filter: "brightness(90%)",
+  },
+  RecipeImageChangeButton: {
+    position: "absolute",
+    zIndex: 4,
+    display: "flex",
+    alignItems: "center",
+    top: 2,
+    left: 2,
+    "& svg": {
+      fill: "#fff",
+      fontSize: "2rem",
+    },
   },
   RecipeTitle: {
     fontSize: "1.5rem",
@@ -42,6 +61,7 @@ function Recipe({
   addToFavs,
   removeFromFavs,
 }) {
+  const [openImageOpload, setOpenImageUpload] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const [totalTime, setTotalTime] = useState(0);
   const [totalCalories, setTotalCalories] = useState(0);
@@ -79,6 +99,7 @@ function Recipe({
       setUserIsOwner(data.Owner.username === userInfo.username);
     }
   }, [data, userInfo, isLoading, isError, history]);
+  console.log(data);
   return (
     <>
       {isLoading ? (
@@ -98,11 +119,35 @@ function Recipe({
               >
                 <Grid item md={6} lg={6}>
                   <Card>
-                    <img
-                      className={classes.RecipeImage}
-                      src={data.ImageURL ? data.ImageURL : PlaceHolderImage}
-                      alt={data.Title}
-                    />
+                    <Box position="relative">
+                      {userIsOwner ? (
+                        <Box className={classes.RecipeImageChangeButton}>
+                          <IconButton onClick={() => setOpenImageUpload(true)}>
+                            <EditOutlined />
+                          </IconButton>
+                        </Box>
+                      ) : null}
+                      <img
+                        className={classes.RecipeImage}
+                        src={
+                          data.ImageURL
+                            ? "https://lembasbucket.s3.eu-central-1.amazonaws.com/" +
+                              data.ImageURL
+                            : PlaceHolderImage
+                        }
+                        alt={data.Title}
+                      />
+                      <Backdrop open={openImageOpload} style={{ zIndex: 1000 }}>
+                        <ImageUpload
+                          handleAuthenticatedEndpointRequest={
+                            handleAuthenticatedEndpointRequest
+                          }
+                          recipename={data.Title}
+                          recipeid={params.id}
+                          close={() => setOpenImageUpload(false)}
+                        />
+                      </Backdrop>
+                    </Box>
                   </Card>
                 </Grid>
                 <Grid
@@ -132,14 +177,6 @@ function Recipe({
                       }
                     />
                   </Grid>
-                  {/* <Grid item md={12} lg={12} xs={12} sm={12}>
-                    <Grow in={true}>
-                      <Description
-                        description={data.Description}
-                        recipeid={params.id}
-                      />
-                    </Grow>
-                  </Grid>*/}
                 </Grid>
 
                 <Grid item container spacing={2}>

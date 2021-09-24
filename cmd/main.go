@@ -18,14 +18,27 @@ import (
 var migrationFileName = flag.String("filename", "initial_migration", "name of the specific file to parse for migration")
 
 func main(){
-	mediahandler.CheckIfDirsExistOrCreate()
 	logging.InitLogging()
 	err := godotenv.Load()
 	if err != nil{
 		panic(err)
 	}
+	
+	err = mediahandler.InitiateConn(mediahandler.S3Config{
+		Region: os.Getenv("AWS_REGION"),
+		AKID: os.Getenv("AWS_AKI"),
+		SAK: os.Getenv("AWS_SAK"),
+		BucketName: "lembasbucket",
+	})
+	if err != nil {
+		panic(err)
+	}
+	err = mediahandler.S3Connection.CreateBucketIfNotExist()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Succesfully connected to bucket")
 	flag.Parse()
-	fmt.Println(flag.Args(), *migrationFileName)
 	util.SigningKey = []byte(os.Getenv("JWT_SECRET"))
 	if len(os.Args) > 1{
 		for _, x := range os.Args{
@@ -44,17 +57,8 @@ func main(){
 				server.HTTPServer()
 			}
 		}
-		
 	}else{
 		server.HTTPServer()
 	}
-
-	// err = migrations.RunMigrations()
-	// if err == nil{
-	// 	fmt.Println("ran migrations")
-	// }
-	// bmr := calories.CalculateBMR(23, 155.0,50.0,"female")
-	// fmt.Println("bmr",bmr)
-	// fmt.Println("tdee",calories.CalculateTDEE(bmr, "light") - 250)
 }
 

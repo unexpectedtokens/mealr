@@ -18,7 +18,7 @@ const useStyles = makeStyles({
   CardImage: {
     width: "100%",
     transform: "scale(1.05)",
-    filter: "brightness(80%)",
+    filter: "brightness(70%)",
   },
   CardHeader: {
     fontSize: "1.5rem",
@@ -92,6 +92,7 @@ function RecipeCard({
 }) {
   const [hover, setHover] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [handlingFavMod, setHandlingFavMod] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const classes = useStyles();
@@ -121,7 +122,7 @@ function RecipeCard({
   };
   return (
     <Grid item md={4} xs={12} sm={6} lg={3}>
-      <Grow in={imageLoaded || recipe.ImageURL === ""}>
+      <Grow in={imageLoaded || !recipe.ImageURL}>
         <Card
           className={hover ? classes.CardOnHover : classes.CardNeutral}
           onMouseEnter={() => setHover(true)}
@@ -142,14 +143,21 @@ function RecipeCard({
                 {recipe.Likes}
               </Typography>
             </Box>
-            {recipe.ImageURL !== "" ? (
+            {recipe.ImageURL && !imageError ? (
               <CardMedia
                 onClick={() => navigate(`/recipes/detail/${recipe.ID}`)}
               >
                 <img
-                  src={recipe.ImageURL}
+                  src={
+                    "https://lembasbucket.s3.eu-central-1.amazonaws.com/" +
+                    recipe.ImageURL
+                  }
                   className={classes.CardImage}
                   onLoad={() => setImageLoaded(true)}
+                  onError={(e) => {
+                    console.log("e", e);
+                    setImageError(true);
+                  }}
                   alt={recipe.Title}
                 />
               </CardMedia>

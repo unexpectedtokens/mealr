@@ -26,6 +26,7 @@ func InitDB(){
     "password=%s dbname=%s sslmode=disable",
 	config[pghost], config[pgport], config[pguser], config[pgpw], config[pgdb])
 	DBCon, err = sql.Open("postgres", psqlInfo)
+    
 	if err != nil{
 		defer logging.ErrorLogger(err, "database/main.go", "InitDB")
 		panic(err)
@@ -35,6 +36,7 @@ func InitDB(){
 		defer logging.ErrorLogger(err, "database/main.go", "InitDB")
 		panic(err)
 	}
+    DBCon.SetMaxOpenConns(5)
 	fmt.Println("Succesfully connected to DB")
 }
 

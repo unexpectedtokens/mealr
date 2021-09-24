@@ -54,7 +54,7 @@ func handleRequests(){
 	router.GET("/api/recipes/detail/:id", applyMiddleware(routes.RecipeDetail))
 	router.PATCH("/api/recipes/detail/:id", applyMiddleware(routes.UpdateRecipeView, middleware.AuthorizeMiddleware))
 	router.POST("/api/recipes/create/", applyMiddleware(routes.CreateRecipeView, middleware.AuthorizeMiddleware))
-	router.GET("/api/recipes/addbanner/", applyMiddleware(routes.RecipeBannerView, middleware.AuthorizeMiddleware))
+	router.POST("/api/recipes/detail/:id/addbanner/", applyMiddleware(routes.RecipeBannerView, middleware.AuthorizeMiddleware))
 	router.GET("/api/recipes/allingredients/", applyMiddleware(routes.GetAllFoodIngredientsView))
 	router.POST("/api/recipes/like/:id", applyMiddleware(routes.AddToFavView, middleware.AuthorizeMiddleware))
 	router.DELETE("/api/recipes/like/:id", applyMiddleware(routes.RemoveFromFavView, middleware.AuthorizeMiddleware))

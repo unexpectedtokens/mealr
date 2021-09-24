@@ -12,6 +12,7 @@ import (
 	"github.com/unexpectedtokens/mealr/auth"
 	db "github.com/unexpectedtokens/mealr/database"
 	"github.com/unexpectedtokens/mealr/logging"
+	"github.com/unexpectedtokens/mealr/mediahandler"
 	"github.com/unexpectedtokens/mealr/middleware"
 	"github.com/unexpectedtokens/mealr/recipes"
 	"github.com/unexpectedtokens/mealr/util"
@@ -788,7 +789,7 @@ func CreateRecipeView(w http.ResponseWriter, r *http.Request, _ httprouter.Param
 
 
 func UpdateRecipeView(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
-	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+	 if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
 		
 		idString := ps.ByName("id")
 		id, err := getIDfromString(idString)
@@ -824,22 +825,82 @@ func UpdateRecipeView(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 }
 
 
+type ImageNameResponse struct{
+	Filename string
+}
 
 func RecipeBannerView(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
-	
-	id:=ps.ByName("id")
-	r.ParseMultipartForm(10 << 20)
-	file, handler, err := r.FormFile("banner")
-	if err != nil{
-		http.Error(w, "Unable to parse image", http.StatusBadRequest)
-		defer logging.ErrorLogger(err, "routes/recipe.go", "RecipeBannerView")
-		return
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+		idstring:=ps.ByName("id")
+		recipeid, err := getIDfromString(idstring)
+		if err != nil{
+			http.Error(w, "Unable to parse image", http.StatusBadRequest)
+			defer logging.ErrorLogger(err, "routes/recipe.go", "RecipeBannerView")
+			return
+		}
+		err = checkIfRequesteeIsRecipeOwner(recipeid, derivedID)
+		if err != nil{
+			auth.ReturnUnauthorized(w)
+			return
+		}
+		r.ParseMultipartForm(10 << 20)
+		file, handler, err := r.FormFile("banner")
+		if err != nil{
+			http.Error(w, "Unable to parse image", http.StatusBadRequest)
+			defer logging.ErrorLogger(err, "routes/recipe.go", "RecipeBannerView")
+			return
+		}
+		fmt.Println("filename", handler.Filename)
+		defer file.Close()
+		var image_url sql.NullString
+		//Check if owner
+		err = db.DBCon.QueryRow("SELECT image_url FROM recipes WHERE id = $1;", recipeid).Scan(&image_url)
+		if err != nil {
+			fmt.Println(err)
+			util.ReturnNotFound(w)
+			return
+		}
+		
+		if image_url.Valid && image_url.String != "" {
+			err = mediahandler.S3Connection.DeleteImage(image_url.String)
+			if err != nil{
+				util.HTTPServerError(w)
+				fmt.Println(err)
+				return
+			}
+		}
+		
+		filename := idstring + "_" + handler.Filename
+		fmt.Println("recipeid:", recipeid)
+		fmt.Printf("Uploaded File: %+v\n", filename)
+    	fmt.Printf("File Size: %+v\n", handler.Size)
+    	fmt.Printf("MIME Header: %+v\n", handler.Header)
+		//check if recipe already has banner. if true delete image
+		
+		//////
+		///attempt image upload
+		err = mediahandler.S3Connection.StoreImage(file, filename)
+		if err != nil {
+			util.HTTPServerError(w)
+			fmt.Println(err)
+			return
+		}
+		//if succes update recipe record banner image
+		//
+		_, err = db.DBCon.Exec("UPDATE recipes SET image_url = $1 WHERE id = $2;", filename, recipeid)
+		if err != nil{
+			util.HTTPServerError(w)
+			fmt.Println(err)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+		resUS := ImageNameResponse{
+			Filename: filename,
+		}
+		res, _ := json.Marshal(&resUS)
+		w.Write(res)
+		///////
 	}
-	defer file.Close()
-	fmt.Println("recipeid:", id)
-	fmt.Printf("Uploaded File: %+v\n", handler.Filename)
-    fmt.Printf("File Size: %+v\n", handler.Size)
-    fmt.Printf("MIME Header: %+v\n", handler.Header)
 }
 
 
