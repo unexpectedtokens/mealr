@@ -13,9 +13,7 @@ import { useSnackbar } from "notistack";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 
-import config from "../../../../../Config/config";
 
-//const useStyles = makeStyles({});
 
 const ControlButton = ({ buttonText, onClick, color }) => {
   return (
@@ -104,7 +102,7 @@ function MealPlanner({ validForMG, navigate, setActiveRoute }) {
   const [step, setStep] = useState(1);
   const [isNext, setIsNext] = useState(false);
   const [isPrev, setIsPrev] = useState(false);
-
+  console.log(isNext, isPrev)
   const [connected, setConnected] = useState(false);
   const ws = useRef(null);
 
@@ -138,9 +136,9 @@ function MealPlanner({ validForMG, navigate, setActiveRoute }) {
     generateSocket();
   }, [generateSocket]);
 
-  const emit = (msg) => {
-    ws.current.send(msg);
-  };
+  // const emit = (msg) => {
+  //   ws.current.send(msg);
+  // };
 
   const messageHandler = (msg) => {
     console.log(msg);
