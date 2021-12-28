@@ -82,7 +82,6 @@ func RegisterView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
 
 //LoginView is a function to check if user exists and then if the password is correct
 func LoginView(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
-	fmt.Println("hit")
 	user, err := auth.DecodeRequestBodyIntoUser(r)
 	if err != nil {
 		defer logging.ErrorLogger(err, "routes/auth.go", "LoginView")

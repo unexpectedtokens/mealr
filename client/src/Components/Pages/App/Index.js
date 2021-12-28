@@ -122,9 +122,11 @@ function Main({ setAuth, auth, refreshOn404 }) {
     contentType = "application/json"
   ) => {
     console.log(
-      `Attempting endpoint fetch at ${endpoint}, method: ${type}, with key ${
+      `Attempting endpoint fetch at ${endpoint},\nmethod: ${type},\n with key ${
         auth.Key
-      } content-type: ${contentType}, body: ${body ? body : ""}`
+      }\n content-type: ${contentType}, \nbody: ${
+        body ? body : ""
+      }\ncontent_type: ${contentType}`
     );
     return new Promise(async (resolve, reject) => {
       try {
@@ -137,6 +139,7 @@ function Main({ setAuth, auth, refreshOn404 }) {
         if (contentType === "application/json") {
           callParams.headers["Content-Type"] = contentType;
         }
+
         if (body) {
           callParams["body"] = body;
         }

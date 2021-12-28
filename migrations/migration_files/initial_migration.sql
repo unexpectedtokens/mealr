@@ -100,6 +100,8 @@ CREATE TABLE IF NOT EXISTS profiles(
 	CONSTRAINT fk_user
 		FOREIGN KEY(user_id) REFERENCES users(id)
 );
+
+
 CREATE TABLE IF NOT EXISTS jwt_auth(
 	id serial PRIMARY KEY,
 	user_id INT,

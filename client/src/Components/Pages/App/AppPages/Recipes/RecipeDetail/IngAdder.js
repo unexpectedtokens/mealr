@@ -173,7 +173,7 @@ const IngAdder = ({
                       variant="outlined"
                       value={searchVal}
                       onChange={(e) => handleSearchValueChanged(e.target.value)}
-                      label="search for recipe"
+                      label="search for ingredient"
                       onFocus={() => setFocus(true)}
                       onBlur={() => setFocus(false)}
                       fullWidth
