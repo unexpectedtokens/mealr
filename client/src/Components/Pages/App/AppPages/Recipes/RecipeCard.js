@@ -134,7 +134,11 @@ function RecipeCard({
                 onClick={recipe.LikedByUser ? dislikeRecipe : likeRecipe}
                 disabled={handlingFavMod}
               >
-                {recipe.LikedByUser ? <Star /> : <StarBorderOutlined />}
+                {recipe.LikedByUser ? (
+                  <Star color="primary" />
+                ) : (
+                  <StarBorderOutlined />
+                )}
               </IconButton>
               <Typography
                 style={{ pointerEvents: "none", color: "#fff" }}

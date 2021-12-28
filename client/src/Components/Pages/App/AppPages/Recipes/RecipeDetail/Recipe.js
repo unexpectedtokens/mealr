@@ -99,7 +99,6 @@ function Recipe({
       setUserIsOwner(data.Owner.username === userInfo.username);
     }
   }, [data, userInfo, isLoading, isError, history]);
-  console.log(data);
   return (
     <>
       {isLoading ? (

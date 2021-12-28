@@ -18,6 +18,7 @@ import (
 var migrationFileName = flag.String("filename", "initial_migration", "name of the specific file to parse for migration")
 
 func main(){
+	fmt.Println(21 << 20)
 	logging.InitLogging()
 	err := godotenv.Load()
 	if err != nil{

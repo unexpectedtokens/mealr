@@ -1,10 +1,12 @@
 package mediahandler
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -97,14 +99,17 @@ func (connec S3Conn) CreateBucketIfNotExist() error{
 }
 
 func (connec S3Conn) StoreImage(file io.Reader, filename string) (error){
-	
+	fmt.Println("uploading file to bucket")
 	uploader := s3manager.NewUploader(connec.Session)
-	op, err := uploader.Upload(&s3manager.UploadInput{
+	ctx := context.Background()
+	timeout, _ := context.WithTimeout(ctx, 4*time.Second)
+	op, err := uploader.UploadWithContext(timeout, &s3manager.UploadInput{
 		Bucket: aws.String(connec.BucketName),
 		ACL: aws.String("public-read"),
 		Key: aws.String(filename),
 		Body: file,
 	})
+	
 	if err != nil {
 		return err
 	}
@@ -113,10 +118,18 @@ func (connec S3Conn) StoreImage(file io.Reader, filename string) (error){
 }
 
 func (connec S3Conn) DeleteImage(key string) (err error){
+	fmt.Println("deleting file from bucket")
 	s := s3.New(session.Must(S3Connection.Session, nil))
-	_, err = s.DeleteObject(&s3.DeleteObjectInput{
+	ctx := context.Background()
+
+	timeout, _ := context.WithTimeout(ctx, 4*time.Second)
+
+	_, err = s.DeleteObjectWithContext(timeout, &s3.DeleteObjectInput{
 		Key: aws.String(key),
 		Bucket: aws.String(connec.BucketName),
 	})
+	if err != nil{
+		return err
+	}
 	return
 }

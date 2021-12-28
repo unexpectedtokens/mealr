@@ -25,6 +25,7 @@ const all listQuery = "all"
 const mine listQuery = "mine"
 const fav listQuery = "fav"
 
+
 func getIDfromString(id string) (int64, error){
 	intID, err := strconv.Atoi(id)
 	if err != nil {
@@ -172,10 +173,10 @@ func prepareRecipeStatements() error{
 	COUNT(f.id) AS f_count
 FROM recipes r
 LEFT JOIN favourite_recipes f on f.recipeid = r.id
-WHERE r.public OR r.owner = 1
+WHERE r.public OR r.owner = $1
 GROUP BY f.recipeid, r.id
 ORDER BY f_count DESC
-LIMIT $1 OFFSET $2;`)
+LIMIT $2 OFFSET $3;`)
   if err != nil {
 	  return fmt.Errorf("error creating allrecipeSTMT: %s", err.Error())
   }
@@ -200,7 +201,7 @@ LIMIT $2 OFFSET $3;`)
 	COUNT(f.id) AS f_count
 	FROM recipes r
 	LEFT JOIN favourite_recipes f on f.recipeid = r.id
-	WHERE f.userid = $1 AND r.public
+	WHERE f.userid = $1 AND r.public OR f.userid = $1 AND r.owner = $1
 	GROUP BY r.id, f.id
 	ORDER BY f_count DESC
 	LIMIT $2 OFFSET $3;`)
@@ -243,7 +244,7 @@ func fetchRecipeList(queryType listQuery, userid int64, limit, offset int) (json
 	var rows *sql.Rows
 	switch queryType{
 	case all:
-		rows, err = statements.AllRecipeSTMT.Query(limit, offset)
+		rows, err = statements.AllRecipeSTMT.Query(userid, limit, offset)
 	case fav:
 		rows, err = statements.FavouriteRecipeSTMT.Query(userid, limit, offset)
 	case mine:
@@ -428,6 +429,7 @@ func checkIfRequesteeIsRecipeOwner(recipeID int64, requesteeID auth.UserID) erro
 	if err != nil {
 		return fmt.Errorf("error scanning into row: %s", err.Error())
 	}
+	
 	if OwnerID != requesteeID{
 		return fmt.Errorf("error: requestee is not owner")
 	}
@@ -829,28 +831,48 @@ type ImageNameResponse struct{
 	Filename string
 }
 
+
+
+const MAX_SIZE = 50 * 1024 * 1024
+
 func RecipeBannerView(w http.ResponseWriter, r *http.Request, ps httprouter.Params){
+	fmt.Printf("Method: %s\nc-type: %s\nc-length: %d\nmax_size: %d\n", r.Method, r.Header.Get("Content-Type"), r.ContentLength, MAX_SIZE)
+	r.Body = http.MaxBytesReader(w, r.Body, MAX_SIZE)
+	if err := r.ParseMultipartForm(0); err != nil{
+		panic(err)
+	}
+	file, handler, err := r.FormFile("banner")
+	if err != nil{
+		fmt.Printf("error from r.FormFile: %s\n", err.Error())
+		http.Error(w, "Unable to parse image", http.StatusBadRequest)
+		return
+	}
+	fmt.Println("file accepted")
+	// dst, err := os.Create(fmt.Sprintf("./tmp/images/%s", handler.Filename))
+	// if err != nil{
+	// 	panic(err)
+	// }
+	// io.Copy(dst, file)
+	defer r.Body.Close()
 	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok{
+
 		idstring:=ps.ByName("id")
 		recipeid, err := getIDfromString(idstring)
+		fmt.Println("getting id from string")
 		if err != nil{
 			http.Error(w, "Unable to parse image", http.StatusBadRequest)
 			defer logging.ErrorLogger(err, "routes/recipe.go", "RecipeBannerView")
 			return
 		}
+		
 		err = checkIfRequesteeIsRecipeOwner(recipeid, derivedID)
 		if err != nil{
 			auth.ReturnUnauthorized(w)
 			return
 		}
-		r.ParseMultipartForm(10 << 20)
-		file, handler, err := r.FormFile("banner")
-		if err != nil{
-			http.Error(w, "Unable to parse image", http.StatusBadRequest)
-			defer logging.ErrorLogger(err, "routes/recipe.go", "RecipeBannerView")
-			return
-		}
-		fmt.Println("filename", handler.Filename)
+		
+		
+		
 		defer file.Close()
 		var image_url sql.NullString
 		//Check if owner
@@ -871,10 +893,10 @@ func RecipeBannerView(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		}
 		
 		filename := idstring + "_" + handler.Filename
-		fmt.Println("recipeid:", recipeid)
-		fmt.Printf("Uploaded File: %+v\n", filename)
-    	fmt.Printf("File Size: %+v\n", handler.Size)
-    	fmt.Printf("MIME Header: %+v\n", handler.Header)
+		// fmt.Println("recipeid:", recipeid)
+		// fmt.Printf("Uploaded File: %+v\n", filename)
+    	// fmt.Printf("File Size: %+v\n", handler.Size)
+    	// fmt.Printf("MIME Header: %+v\n", handler.Header)
 		//check if recipe already has banner. if true delete image
 		
 		//////
@@ -885,6 +907,7 @@ func RecipeBannerView(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 			fmt.Println(err)
 			return
 		}
+		
 		//if succes update recipe record banner image
 		//
 		_, err = db.DBCon.Exec("UPDATE recipes SET image_url = $1 WHERE id = $2;", filename, recipeid)
@@ -893,12 +916,14 @@ func RecipeBannerView(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 			fmt.Println(err)
 			return
 		}
+		
 		w.WriteHeader(http.StatusCreated)
 		resUS := ImageNameResponse{
 			Filename: filename,
 		}
 		res, _ := json.Marshal(&resUS)
 		w.Write(res)
+		
 		///////
 	}
 }

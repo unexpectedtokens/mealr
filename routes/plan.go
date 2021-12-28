@@ -105,7 +105,7 @@ func generateDayPlan(nc, meals, order int, toExclude *[]int64, weekDay string, d
 
 
 
-var generateMutex sync.Mutex
+//var generateMutex sync.Mutex
 //GeneratePlanView is a view that returns a recipe back te the requester
 func GeneratePlanView (w http.ResponseWriter, r *http.Request){
 	placeHolderPlan = recipes.Mealplan{}
@@ -280,10 +280,21 @@ func MealPlanConnect(w http.ResponseWriter, r *http.Request, _ httprouter.Params
 	
 }
 
+type mealsInDay int16
+
+func (x mealsInDay) isValid() error{
+	if(!(x >= 2 && x <=6)){
+		return fmt.Errorf("not a valid amount of meals in a day")
+	}
+	return nil
+	
+}
+
 func reader (conn *websocket.Conn){
 	var vegan bool
 	var vegetarian bool
-	
+	//var mealsAday mealsInDay
+		
 	for{
 		fmt.Println(vegan, vegetarian)
 		messageType, p, err := conn.ReadMessage()
@@ -291,7 +302,7 @@ func reader (conn *websocket.Conn){
 			fmt.Println(err)
 			return
 		}
-		fmt.Println(messageType)
+		fmt.Println(messageType, p)
 		conn.WriteMessage(websocket.TextMessage, p)
 	}
 }

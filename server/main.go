@@ -37,6 +37,7 @@ func applyMiddleware(h httprouter.Handle, m ...middlewareFunc) httprouter.Handle
 //ALWAYS put in AuthorizeMiddleware last if you need the (user)id in the handler function. An option is to wrap the actual handler function with auth middleware before passing it to applyMiddleware
 func handleRequests(){
 	router := httprouter.New()
+	
 	//RECIPE RELATED
 	router.GET("/api/recipes/listall/", applyMiddleware(routes.AllRecipes, middleware.AuthorizeMiddleware))
 	router.GET("/api/recipes/detail/:id/mi/", applyMiddleware(routes.RecipeIngredientDetail))
@@ -54,7 +55,7 @@ func handleRequests(){
 	router.GET("/api/recipes/detail/:id", applyMiddleware(routes.RecipeDetail))
 	router.PATCH("/api/recipes/detail/:id", applyMiddleware(routes.UpdateRecipeView, middleware.AuthorizeMiddleware))
 	router.POST("/api/recipes/create/", applyMiddleware(routes.CreateRecipeView, middleware.AuthorizeMiddleware))
-	router.POST("/api/recipes/detail/:id/addbanner/", applyMiddleware(routes.RecipeBannerView, middleware.AuthorizeMiddleware))
+	router.POST("/api/recipes/detail/:id/addbanner/", routes.RecipeBannerView)
 	router.GET("/api/recipes/allingredients/", applyMiddleware(routes.GetAllFoodIngredientsView))
 	router.POST("/api/recipes/like/:id", applyMiddleware(routes.AddToFavView, middleware.AuthorizeMiddleware))
 	router.DELETE("/api/recipes/like/:id", applyMiddleware(routes.RemoveFromFavView, middleware.AuthorizeMiddleware))
@@ -82,6 +83,7 @@ func handleRequests(){
 	router.NotFound = http.FileServer(http.Dir("./client/build"))
 	router.GET("/ws_test", routes.MealPlanConnect)
 	//CORS SETTINGS
+	
 	_cors := cors.Options{
         AllowedMethods: []string{"POST", "OPTIONS", "GET", "PUT", "UPDATE", "PATCH", "HEAD", "DELETE"},
         AllowedOrigins: []string{"*"},

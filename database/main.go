@@ -36,7 +36,10 @@ func InitDB(){
 		defer logging.ErrorLogger(err, "database/main.go", "InitDB")
 		panic(err)
 	}
-    DBCon.SetMaxOpenConns(5)
+    // DBCon.SetConnMaxLifetime(5*time.Minute)
+    // DBCon.SetMaxOpenConns(5)
+    // DBCon.SetMaxIdleConns(5000)
+
 	fmt.Println("Succesfully connected to DB")
 }
 
