@@ -35,7 +35,7 @@ func RunMigrations(filename string) error{
 
 //Flush deletes all tables from postgres
 func Flush(){
-	query := "DROP TABLE users CASCADE; DROP TABLE profiles; DROP TABLE jwt_auth; DROP TABLE recipes CASCADE; DROP TABLE ingredients_from_recipe; DROP TABLE methods_from_recipe; DROP TABLE food_ingredient CASCADE; DROP TABLE ingredients_from_foodingredient_from_recipe;"
+	query := "DROP TABLE users CASCADE; DROP TABLE profiles; DROP TABLE jwt_auth; DROP TABLE recipes CASCADE; DROP TABLE ingredients_from_recipe; DROP TABLE methods_from_recipe; DROP TABLE food_ingredient CASCADE; DROP TABLE ingredients_from_foodingredient_from_recipe; DROP TABLE favourite_recipes; DROP TABLE notes_from_recipes;"
 	db.InitDB()
 	defer db.DBCon.Close()
 	_, err := db.DBCon.Exec(query)

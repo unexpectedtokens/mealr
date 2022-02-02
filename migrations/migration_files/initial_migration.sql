@@ -81,9 +81,16 @@ CREATE TABLE IF NOT EXISTS methods_from_recipe(
 	method VARCHAR(2000),
 	moment_added TIMESTAMP NOT NULL DEFAULT now(),
 	duration_in_minutes NUMERIC NOT NULL DEFAULT 0,
+	timer_duration NUMERIC NOT NULL DEFAULT 0,
+	action_after_timer VARCHAR(300),
 	CONSTRAINT fk_ing FOREIGN KEY(recipeid) REFERENCES recipes(id) ON DELETE CASCADE
 );
 
+
+CREATE TABLE IF NOT EXISTS ingredients_in_method(
+	methodid INT NOT NULL,
+	ingid INT NOT NULL,
+);
 
 CREATE TABLE IF NOT EXISTS profiles(
 	id serial PRIMARY KEY,

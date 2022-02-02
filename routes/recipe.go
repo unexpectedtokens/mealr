@@ -108,7 +108,7 @@ func prepareRecipeStatements() error{
 	if err != nil {
 		return err
 	}
-	statements.GetMethodFromRecipeSTMT, err = db.DBCon.Prepare("SELECT id, method, moment_added, duration_in_minutes  FROM methods_from_recipe WHERE recipeid=$1;")
+	statements.GetMethodFromRecipeSTMT, err = db.DBCon.Prepare("SELECT id, method, moment_added, duration_in_minutes, timer_duration, action_after_timer  FROM methods_from_recipe WHERE recipeid=$1;")
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func prepareRecipeStatements() error{
 	if err != nil {
 		return err
 	}
-	statements.MethodStepCreateSTMT, err = db.DBCon.Prepare("INSERT INTO methods_from_recipe (recipeid, method, moment_added, duration_in_minutes) VALUES ($1, $2, $3, $4) RETURNING id;")
+	statements.MethodStepCreateSTMT, err = db.DBCon.Prepare("INSERT INTO methods_from_recipe (recipeid, method, moment_added, duration_in_minutes, action_after_timer, timer_duration) VALUES ($1, $2, $3, $4) RETURNING id;")
 	if err != nil {
 		return err
 	}
