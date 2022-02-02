@@ -1,9 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="41.232" height="41" viewBox="0 0 41.232 41">
-  <g id="Group_25" data-name="Group 25" transform="translate(-528 -2920)">
-    <g id="Ellipse_11" data-name="Ellipse 11" transform="translate(528 2920)" fill="#49814c" stroke="#49814c" stroke-width="5">
-      <circle cx="20.5" cy="20.5" r="20.5" stroke="none"/>
-      <circle cx="20.5" cy="20.5" r="18" fill="none"/>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="232.43" height="232.43" viewBox="0 0 232.43 232.43">
+  <defs>
+    <linearGradient id="linear-gradient" x1="0.212" y1="0.094" x2="0.905" y2="0.965" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#8ebf73"/>
+      <stop offset="1" stop-color="#569549"/>
+    </linearGradient>
+    <filter id="Icon_ionic-ios-leaf" x="46.542" y="35.765" width="138.97" height="143.069" filterUnits="userSpaceOnUse">
+      <feOffset input="SourceAlpha"/>
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feFlood flood-opacity="0.161" result="color"/>
+      <feComposite operator="out" in="SourceGraphic" in2="blur"/>
+      <feComposite operator="in" in="color"/>
+      <feComposite operator="in" in2="SourceGraphic"/>
+    </filter>
+  </defs>
+  <g id="Group_26" data-name="Group 26" transform="translate(104 -309)">
+    <path id="Path_1" data-name="Path 1" d="M37.489,0H194.941A37.489,37.489,0,0,1,232.43,37.489V194.941a37.489,37.489,0,0,1-37.489,37.489H37.489A37.489,37.489,0,0,1,0,194.941V37.489A37.489,37.489,0,0,1,37.489,0Z" transform="translate(-104 309)" fill="url(#linear-gradient)"/>
+    <g data-type="innerShadowGroup">
+      <path id="Icon_ionic-ios-leaf-2" data-name="Icon ionic-ios-leaf" d="M107.91,47.922C80.993,26.341,36.331,35.165,4.464,2.355-2.959-5.3,5.113,95.059,45,130.494c29.167,25.883,83.65,10.117,93.06,5.888,8.548-3.864-8.831-4.539-8.831-4.539h0c.174.021,10.912,4.136,10.788,2.328-.193-2.7-8.088,3.98,0,0C145.205,132.328,128.117,64.145,107.91,47.922Zm19.963,79.5c-29.13-8.494-59.364-30.761-75.785-47.239-1.35-1.349.6-3.354,2.062-2.187a229.757,229.757,0,0,0,72.468,39.335C126.693,120.286,129.822,125.748,127.873,127.425Z" transform="translate(-59.445 342.824)" fill="#4b7e3e"/>
+      <g transform="matrix(1, 0, 0, 1, -104, 309)" filter="url(#Icon_ionic-ios-leaf)">
+        <path id="Icon_ionic-ios-leaf-3" data-name="Icon ionic-ios-leaf" d="M107.91,47.922C80.993,26.341,36.331,35.165,4.464,2.355-2.959-5.3,5.113,95.059,45,130.494c29.167,25.883,83.65,10.117,93.06,5.888,8.548-3.864-8.831-4.539-8.831-4.539h0c.174.021,10.912,4.136,10.788,2.328-.193-2.7-8.088,3.98,0,0C145.205,132.328,128.117,64.145,107.91,47.922Zm19.963,79.5c-29.13-8.494-59.364-30.761-75.785-47.239-1.35-1.349.6-3.354,2.062-2.187a229.757,229.757,0,0,0,72.468,39.335C126.693,120.286,129.822,125.748,127.873,127.425Z" transform="translate(44.55 33.82)" fill="#fff"/>
+      </g>
     </g>
-    <path id="Icon_ionic-ios-leaf" data-name="Icon ionic-ios-leaf" d="M34.032,14.739C26,9.1,13.784,13.194,4.27,4.615c-2.216-2-.929,22.45,10.98,31.716,8.708,6.768,18.961,4.69,21.771,3.584A6.138,6.138,0,0,0,40.4,36.683h0c.241.025-.9-3.333,2.175-4.659C44.121,31.542,40.066,18.981,34.032,14.739Zm4.5,20.467c-8.7-2.221-16.264-7.722-21.166-12.03-.4-.353.179-.877.616-.572A71.939,71.939,0,0,0,39.618,32.889,3.3,3.3,0,0,1,38.532,35.206Z" transform="translate(526.328 2916.501)" fill="#fff"/>
   </g>
 </svg>

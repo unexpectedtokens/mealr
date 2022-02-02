@@ -22,11 +22,7 @@ CREATE TABLE IF NOT EXISTS recipes(
 	public BOOLEAN NOT NULL DEFAULT 't'
 );
 
-CREATE TABLE IF NOT EXISTS favourites(
-	id serial PRIMARY KEY,
-	userid INT REFERENCES users(id) ON DELETE CASCADE,
-	recipeid int REFERENCES recipes(id) ON DELETE CASCADE
-);
+
 
 CREATE TABLE IF NOT EXISTS food_ingredient(
 	id serial PRIMARY KEY,
@@ -65,13 +61,7 @@ CREATE TABLE IF NOT EXISTS ingredients_from_recipe(
 	CONSTRAINT fk_ing FOREIGN KEY(recipeid) REFERENCES recipes(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS ingredients_from_foodingredient_from_recipe(
-	id serial PRIMARY KEY,
-	amount NUMERIC,
-	recipeid INT REFERENCES recipes(id) ON DELETE CASCADE,
-	foodingredient_id INT,
-	CONSTRAINT fk_fi FOREIGN KEY(foodingredient_id) REFERENCES food_ingredient(id) ON DELETE CASCADE
-);
+
 	
 
 
@@ -89,7 +79,7 @@ CREATE TABLE IF NOT EXISTS methods_from_recipe(
 
 CREATE TABLE IF NOT EXISTS ingredients_in_method(
 	methodid INT NOT NULL,
-	ingid INT NOT NULL,
+	ingid INT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS profiles(

@@ -35,12 +35,7 @@ const Ingredients = ({
     );
     return response.json();
   };
-  const fetchFoodIngredients = async () => {
-    const response = await fetch(
-      `${config.API_URL}/api/recipes/detail/${recipeid}/fi/`
-    );
-    return response.json();
-  };
+  
   const deleteMiscIng = async (id) => {
     try {
       const response = await handleAuthenticatedEndpointRequest(
@@ -82,49 +77,49 @@ const Ingredients = ({
       client.getQueryData("miscIngredients"),
       deleteOptions.id
     );
-    if (deleteOptions.miscOrFi === "fi") {
-      deleteFoodIng(deleteOptions.id);
-    } else if (deleteOptions.miscOrFi === "mi") {
+    // if (deleteOptions.miscOrFi === "fi") {
+    //   deleteFoodIng(deleteOptions.id);
+    // } else if (deleteOptions.miscOrFi === "mi") {
       deleteMiscIng(deleteOptions.id);
-    }
+    //}
     setShowConfirm(false);
   };
   const miQuery = useQuery("miscIngredients", fetchMiscIngredients);
-  const fiQuery = useQuery("foodIngredients", fetchFoodIngredients);
-  const error = miQuery.isError || fiQuery.isError;
-  const loading = miQuery.isLoading || fiQuery.isLoading;
+  // const fiQuery = useQuery("foodIngredients", fetchFoodIngredients);
+  const error = miQuery.isError
+  const loading = miQuery.isLoading
   const refetch = () => {
     miQuery.refetch();
-    fiQuery.refetch();
+    // fiQuery.refetch();
   };
 
-  useEffect(() => {
-    if (!error && !loading) {
-      const fi = fiQuery.data;
-      const mi = miQuery.data;
-      const totalLength = mi.length + fi.length;
-      const calculatablePercentace = (fi.length / totalLength) * 100;
-      let totalCalories = 0;
-      let totalWeight = 0;
-      fi.forEach((x) => {
-        totalCalories += (x.Amount / 100) * x.CalsPer100;
-        //if (x.ServingUnit === "g") {
-        totalWeight += x.Amount;
-        //}
-      });
-      setTotalCalories(totalCalories);
-      setUseablePercentage(calculatablePercentace);
-      setTotalWeight(totalWeight);
-    }
-  }, [
-    error,
-    loading,
-    fiQuery.data,
-    miQuery.data,
-    setTotalCalories,
-    setUseablePercentage,
-    setTotalWeight,
-  ]);
+  // useEffect(() => {
+  //   if (!error && !loading) {
+      
+  //     const mi = miQuery.data;
+  //     const totalLength = mi.length + fi.length;
+  //     const calculatablePercentace = (fi.length / totalLength) * 100;
+  //     let totalCalories = 0;
+  //     let totalWeight = 0;
+  //     fi.forEach((x) => {
+  //       totalCalories += (x.Amount / 100) * x.CalsPer100;
+  //       //if (x.ServingUnit === "g") {
+  //       totalWeight += x.Amount;
+  //       //}
+  //     });
+  //     setTotalCalories(totalCalories);
+  //     setUseablePercentage(calculatablePercentace);
+  //     setTotalWeight(totalWeight);
+  //   }
+  // }, [
+  //   error,
+  //   loading,
+  //   fiQuery.data,
+  //   miQuery.data,
+  //   setTotalCalories,
+  //   setUseablePercentage,
+  //   setTotalWeight,
+  // ]);
   return (
     <>
       <Backdrop open={showIngAdder} style={{ zIndex: 1001 }}>
@@ -169,7 +164,7 @@ const Ingredients = ({
 
           {!loading &&
           !error &&
-          (fiQuery.data.length > 0 || miQuery.data.length > 0) ? (
+          (miQuery.data.length > 0) ? (
             <List>
               {miQuery.data.map((i) => (
                 <ListItem key={i.ID}>
@@ -195,7 +190,7 @@ const Ingredients = ({
                   ) : null}
                 </ListItem>
               ))}
-              {fiQuery.data.map((i) => (
+              {/* {fiQuery.data.map((i) => (
                 <ListItem key={i.ID}>
                   <Typography>
                     <Typography component="span" style={{ fontWeight: 900 }}>
@@ -219,7 +214,7 @@ const Ingredients = ({
                     </ListItemSecondaryAction>
                   ) : null}
                 </ListItem>
-              ))}
+              ))} */}
             </List>
           ) : (
             <Typography>There are no ingredients in this recipe yet</Typography>
