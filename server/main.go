@@ -13,31 +13,29 @@ import (
 	"github.com/unexpectedtokens/mealr/routes"
 )
 
-
 type middlewareFunc func(httprouter.Handle) httprouter.Handle
 
 var commonMiddleware []middlewareFunc
-func init(){
+
+func init() {
 	commonMiddleware = []middlewareFunc{
 		middleware.LoggingMiddleware,
 	}
 }
 
-
-func applyMiddleware(h httprouter.Handle, m ...middlewareFunc) httprouter.Handle{	
+func applyMiddleware(h httprouter.Handle, m ...middlewareFunc) httprouter.Handle {
 	wrapped := h
 	middlewareList := append(commonMiddleware, m...)
-	for i := len(middlewareList) - 1; i >= 0; i--{
+	for i := len(middlewareList) - 1; i >= 0; i-- {
 		wrapped = middlewareList[i](wrapped)
 	}
-	return wrapped	
+	return wrapped
 }
 
-
 //ALWAYS put in AuthorizeMiddleware last if you need the (user)id in the handler function. An option is to wrap the actual handler function with auth middleware before passing it to applyMiddleware
-func handleRequests(){
+func handleRequests() {
 	router := httprouter.New()
-	
+
 	//RECIPE RELATED
 	router.GET("/api/recipes/listall/", applyMiddleware(routes.AllRecipes, middleware.AuthorizeMiddleware))
 	router.GET("/api/recipes/detail/:id/mi/", applyMiddleware(routes.RecipeIngredientDetail))
@@ -55,7 +53,7 @@ func handleRequests(){
 	router.GET("/api/recipes/detail/:id", applyMiddleware(routes.RecipeDetail))
 	router.PATCH("/api/recipes/detail/:id", applyMiddleware(routes.UpdateRecipeView, middleware.AuthorizeMiddleware))
 	router.POST("/api/recipes/create/", applyMiddleware(routes.CreateRecipeView, middleware.AuthorizeMiddleware))
-	router.POST("/api/recipes/detail/:id/addbanner/", routes.RecipeBannerView)
+	router.POST("/api/recipes/detail/:id/addbanner/", applyMiddleware(routes.RecipeBannerView, middleware.AuthorizeMiddleware))
 	router.GET("/api/recipes/allingredients/", applyMiddleware(routes.GetAllFoodIngredientsView))
 	router.POST("/api/recipes/like/:id", applyMiddleware(routes.AddToFavView, middleware.AuthorizeMiddleware))
 	router.DELETE("/api/recipes/like/:id", applyMiddleware(routes.RemoveFromFavView, middleware.AuthorizeMiddleware))
@@ -83,39 +81,34 @@ func handleRequests(){
 	router.NotFound = http.FileServer(http.Dir("./client/build"))
 	router.GET("/ws_test", routes.MealPlanConnect)
 	//CORS SETTINGS
-	
+
 	_cors := cors.Options{
-        AllowedMethods: []string{"POST", "OPTIONS", "GET", "PUT", "UPDATE", "PATCH", "HEAD", "DELETE"},
-        AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"POST", "OPTIONS", "GET", "PUT", "UPDATE", "PATCH", "HEAD", "DELETE"},
+		AllowedOrigins: []string{"*"},
 		AllowedHeaders: []string{"*"},
-    }
+	}
 	//"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization"
-    handler := cors.New(_cors).Handler(router)
+	handler := cors.New(_cors).Handler(router)
 
 	fmt.Println("Setting op listening on port 8080")
-	
+
 	panic(http.ListenAndServe("localhost:8080", handler))
 }
 
-func serveSPA(w http.ResponseWriter, r *http.Request, _ httprouter.Params){
+func serveSPA(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	app := template.Must(template.ParseFiles("./client/build/index.html"))
 	app.Execute(w, nil)
 }
 
-
-
 //HTTPServer starts the server to receive requests on the specified port
-func HTTPServer(){
+func HTTPServer() {
 	db.InitDB()
 	err := routes.PrepareStatements()
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 	fmt.Println("Succesfully prepared statements")
 	defer db.DBCon.Close()
 	go auth.TokenCleanup()
-	handleRequests()	
+	handleRequests()
 }
-
-
-
