@@ -9,11 +9,32 @@ import {
   IconButton,
   ListItemSecondaryAction,
 } from "@material-ui/core";
-import { DeleteOutlined } from "@material-ui/icons";
+import { DeleteOutlined, AddOutlined } from "@material-ui/icons";
 import config from "../../../../../../Config/config";
 import { useEffect, useState } from "react";
 import IngAdder from "./IngAdder";
 import { useQuery, useQueryClient } from "react-query";
+import styled from "styled-components";
+
+const IngredientList = styled.ul`
+  width: 100%;
+  padding: 0;
+  > li {
+    margin-bottom: 12px;
+    background-color: #fff;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 20px;
+    border-radius: 5px;
+    box-sizing: border-box;
+    svg {
+      fill: #212121;
+    }
+  }
+`;
+//box-shadow: 0 0 10px #55555511;
 const Ingredients = ({
   recipeid,
   userIsOwner,
@@ -35,7 +56,7 @@ const Ingredients = ({
     );
     return response.json();
   };
-  
+
   const deleteMiscIng = async (id) => {
     try {
       const response = await handleAuthenticatedEndpointRequest(
@@ -80,14 +101,14 @@ const Ingredients = ({
     // if (deleteOptions.miscOrFi === "fi") {
     //   deleteFoodIng(deleteOptions.id);
     // } else if (deleteOptions.miscOrFi === "mi") {
-      deleteMiscIng(deleteOptions.id);
+    deleteMiscIng(deleteOptions.id);
     //}
     setShowConfirm(false);
   };
   const miQuery = useQuery("miscIngredients", fetchMiscIngredients);
   // const fiQuery = useQuery("foodIngredients", fetchFoodIngredients);
-  const error = miQuery.isError
-  const loading = miQuery.isLoading
+  const error = miQuery.isError;
+  const loading = miQuery.isLoading;
   const refetch = () => {
     miQuery.refetch();
     // fiQuery.refetch();
@@ -95,7 +116,7 @@ const Ingredients = ({
 
   // useEffect(() => {
   //   if (!error && !loading) {
-      
+
   //     const mi = miQuery.data;
   //     const totalLength = mi.length + fi.length;
   //     const calculatablePercentace = (fi.length / totalLength) * 100;
@@ -121,7 +142,7 @@ const Ingredients = ({
   //   setTotalWeight,
   // ]);
   return (
-    <>
+    <Box mt={6}>
       <Backdrop open={showIngAdder} style={{ zIndex: 1001 }}>
         <IngAdder
           hide={() => setShowIngAdder(false)}
@@ -148,49 +169,69 @@ const Ingredients = ({
           </Box>
         </Card>
       </Backdrop>
-      <Card>
-        <Box p={2}>
-          <Box mb={2}>
-            <Typography variant="h6">Ingredients</Typography>
-            {!loading && error ? (
-              <>
-                <Typography>
-                  Something went wrong fetching ingredients
-                </Typography>
-                <Button onClick={refetch}>Try again</Button>
-              </>
+
+      <Box>
+        <Box mb={2}>
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography variant="h5" style={{ fontWeight: 700 }}>
+              Ingredients
+            </Typography>
+            {userIsOwner ? (
+              <Box display="flex" justifyContent="flex-end">
+                <Button
+                  color="primary"
+                  variant="text"
+                  onClick={() => setShowIngAdder(true)}
+                >
+                  <AddOutlined /> Add ingredient
+                </Button>
+              </Box>
             ) : null}
           </Box>
 
-          {!loading &&
-          !error &&
-          (miQuery.data.length > 0) ? (
-            <List>
-              {miQuery.data.map((i) => (
-                <ListItem key={i.ID}>
-                  <Typography>
-                    <Typography component="span" style={{ fontWeight: 900 }}>
+          {!loading && error ? (
+            <>
+              <Typography>Something went wrong fetching ingredients</Typography>
+              <Button onClick={refetch}>Try again</Button>
+            </>
+          ) : null}
+        </Box>
+
+        {!loading && !error && miQuery.data.length > 0 ? (
+          <IngredientList>
+            {miQuery.data.map((i) => (
+              <li key={i.ID}>
+                <Typography
+                  style={{ textTransform: "capitalize", fontWeight: 500 }}
+                >
+                  {i.Title}
+                </Typography>
+                <Box display="flex" alignItems="center">
+                  <Box pr={3}>
+                    <Typography>
                       {i.Amount} {i.Measurement}
-                    </Typography>{" "}
-                    of {i.Title}
-                  </Typography>
+                    </Typography>
+                  </Box>
                   {userIsOwner ? (
-                    <ListItemSecondaryAction>
-                      <IconButton
-                        edge="end"
-                        aria-label="delete"
-                        onClick={() => {
-                          setDeleteOptions({ miscOrFi: "mi", id: i.ID });
-                          setShowConfirm(true);
-                        }}
-                      >
-                        <DeleteOutlined />
-                      </IconButton>
-                    </ListItemSecondaryAction>
+                    <IconButton
+                      edge="end"
+                      aria-label="delete"
+                      onClick={() => {
+                        setDeleteOptions({ miscOrFi: "mi", id: i.ID });
+                        setShowConfirm(true);
+                      }}
+                    >
+                      <DeleteOutlined />
+                    </IconButton>
                   ) : null}
-                </ListItem>
-              ))}
-              {/* {fiQuery.data.map((i) => (
+                </Box>
+              </li>
+            ))}
+            {/* {fiQuery.data.map((i) => (
                 <ListItem key={i.ID}>
                   <Typography>
                     <Typography component="span" style={{ fontWeight: 900 }}>
@@ -215,24 +256,12 @@ const Ingredients = ({
                   ) : null}
                 </ListItem>
               ))} */}
-            </List>
-          ) : (
-            <Typography>There are no ingredients in this recipe yet</Typography>
-          )}
-          {userIsOwner ? (
-            <Box py={2} display="flex" justifyContent="flex-end">
-              <Button
-                color="primary"
-                variant="contained"
-                onClick={() => setShowIngAdder(true)}
-              >
-                Add ingredient
-              </Button>
-            </Box>
-          ) : null}
-        </Box>
-      </Card>
-    </>
+          </IngredientList>
+        ) : (
+          <Typography>There are no ingredients in this recipe yet</Typography>
+        )}
+      </Box>
+    </Box>
   );
 };
 
