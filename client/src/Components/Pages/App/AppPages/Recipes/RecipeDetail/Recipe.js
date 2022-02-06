@@ -22,6 +22,7 @@ import Ingredients from "./Ingredients";
 import Methods from "./Methods";
 import RecipeMainInfo from "./RecipeMainInfo";
 import ImageUpload from "./ImageUpload";
+import RecipeDetails from "./Details";
 
 const useStyles = makeStyles((theme) => ({
   RecipeImage: {
@@ -55,18 +56,13 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function Recipe({
-  userInfo,
-  handleAuthenticatedEndpointRequest,
-  addToFavs,
-  removeFromFavs,
-}) {
-  const [openImageOpload, setOpenImageUpload] = useState(false);
+function Recipe({ userInfo, handleAuthenticatedEndpointRequest }) {
+  //const [openImageOpload, setOpenImageUpload] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const [totalTime, setTotalTime] = useState(0);
-  const [totalCalories, setTotalCalories] = useState(0);
-  const [totalWeight, setTotalWeight] = useState(0);
-  const [useablePercentage, setUseablePercentage] = useState(0);
+  // const [totalTime, setTotalTime] = useState(0);
+  // const [totalCalories, setTotalCalories] = useState(0);
+  // const [totalWeight, setTotalWeight] = useState(0);
+  // const [useablePercentage, setUseablePercentage] = useState(0);
   const history = useHistory();
   const { params } = useRouteMatch();
   const [userIsOwner, setUserIsOwner] = useState(false);
@@ -99,6 +95,7 @@ function Recipe({
       setUserIsOwner(data.Owner.username === userInfo.username);
     }
   }, [data, userInfo, isLoading, isError, history]);
+  console.log(data);
   return (
     <>
       {isLoading ? (
@@ -109,7 +106,7 @@ function Recipe({
             maxWidth="md"
             // style={{ maxHeight: "80vh", overflow: "scroll", height: "100%" }}
           >
-            <Grow in={true}>
+            {/* <Grow in={true}>
               <Grid
                 container
                 spacing={2}
@@ -180,15 +177,7 @@ function Recipe({
 
                 <Grid item container spacing={2}>
                   <Grid item md={6} sm={12} xs={12}>
-                    <Ingredients
-                      userIsOwner={userIsOwner}
-                      recipeid={params.id}
-                      setTotalCalories={setTotalCalories}
-                      setTotalWeight={setTotalWeight}
-                      setUseablePercentage={setUseablePercentage}
-                      handleAuthenticatedEndpointRequest={
-                        handleAuthenticatedEndpointRequest
-                      }
+                    
                     />
                   </Grid>
                   <Grid item md={6} sm={12} xs={12}>
@@ -203,7 +192,26 @@ function Recipe({
                   </Grid>
                 </Grid>
               </Grid>
-            </Grow>
+            </Grow> */}
+            <RecipeDetails
+              data={data}
+              userIsOwner={userIsOwner}
+              handleAuthenticatedEndpointRequest={
+                handleAuthenticatedEndpointRequest
+              }
+              recipeid={params.id}
+            />
+
+            <Ingredients
+              userIsOwner={userIsOwner}
+              recipeid={params.id}
+              // setTotalCalories={setTotalCalories}
+              // setTotalWeight={setTotalWeight}
+              // setUseablePercentage={setUseablePercentage}
+              handleAuthenticatedEndpointRequest={
+                handleAuthenticatedEndpointRequest
+              }
+            />
           </Container>
         </>
       )}

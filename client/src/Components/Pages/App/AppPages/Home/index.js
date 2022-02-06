@@ -51,7 +51,7 @@ function Home({ navigate, validForMG, loading, userInfo, setActiveRoute }) {
           <Grid container spacing={2}>
             <Grid item xs={12} md={6} lg={4}>
               <Grow in={true}>
-                <Paper elevation={1}>
+                <Paper elevation={0}>
                   <Box p={2}>
                     <p>Hello</p>
                   </Box>
@@ -60,14 +60,14 @@ function Home({ navigate, validForMG, loading, userInfo, setActiveRoute }) {
             </Grid>
             <Grid item xs={12} lg={4} md={6}>
               <Grow in={true}>
-                <Paper elevation={1}>
+                <Paper elevation={0}>
                   <Box p={2}>ello</Box>
                 </Paper>
               </Grow>
             </Grid>
             <Grid item xs={12} lg={4} md={6}>
               <Grow in={true}>
-                <Paper elevation={1}>
+                <Paper elevation={0}>
                   <Box p={2}>ello</Box>
                 </Paper>
               </Grow>

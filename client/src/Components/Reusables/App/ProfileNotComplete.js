@@ -11,7 +11,7 @@ import {
 function PNC({ navigate, show }) {
   return (
     <Grow in={show}>
-      <Card>
+      <Card elevation={0}>
         <Box p={2}>
           <CardContent style={{ padding: 8 }}>
             <Typography

@@ -15,7 +15,7 @@ import config from "../../../../../../Config/config";
 
 const useStyles = makeStyles((theme) => ({
   Container: {
-    minWidth: "50%",
+    minWidth: "0%",
   },
   SuggestionBox: {
     position: "absolute",
@@ -37,7 +37,7 @@ const IngAdder = ({
   recipeid,
   handleAuthenticatedEndpointRequest,
 }) => {
-  const [foIng, setFoIng] = useState(true);
+  const [foIng, setFoIng] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [ingSelected, setIngSelected] = useState(false);
   const [selectedIngredient, setSelectedIngredient] = useState({});
@@ -312,14 +312,14 @@ const IngAdder = ({
                     />
                   </Box>
                 </Box>
-                {newIngredient.name.length < 1 ? (
+                {/* {newIngredient.name.length < 1 ? (
                   <Box display="flex" flexDirection="column" mb={3}>
                     <Typography align="center">or</Typography>
                     <Button onClick={() => setFoIng(true)}>
                       Search for an ingredient
                     </Button>
                   </Box>
-                ) : null}
+                ) : null} */}
 
                 <Button
                   variant="contained"

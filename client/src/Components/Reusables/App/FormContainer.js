@@ -51,7 +51,7 @@ const FormContainer = ({
   return (
     <Grow in={true}>
       <Container maxWidth="md">
-        <Paper className={classes.FormContainer} elevation={1}>
+        <Paper className={classes.FormContainer} elevation={0}>
           <Box
             className={classes.FormHeader}
             display="flex"
