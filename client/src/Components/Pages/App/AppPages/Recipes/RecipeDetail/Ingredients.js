@@ -29,6 +29,7 @@ const IngredientList = styled.ul`
     padding: 5px 20px;
     border-radius: 5px;
     box-sizing: border-box;
+    min-height: 60px;
     svg {
       fill: #212121;
     }

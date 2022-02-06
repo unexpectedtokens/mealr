@@ -56,18 +56,13 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function Recipe({
-  userInfo,
-  handleAuthenticatedEndpointRequest,
-  addToFavs,
-  removeFromFavs,
-}) {
-  const [openImageOpload, setOpenImageUpload] = useState(false);
+function Recipe({ userInfo, handleAuthenticatedEndpointRequest }) {
+  //const [openImageOpload, setOpenImageUpload] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
-  const [totalTime, setTotalTime] = useState(0);
-  const [totalCalories, setTotalCalories] = useState(0);
-  const [totalWeight, setTotalWeight] = useState(0);
-  const [useablePercentage, setUseablePercentage] = useState(0);
+  // const [totalTime, setTotalTime] = useState(0);
+  // const [totalCalories, setTotalCalories] = useState(0);
+  // const [totalWeight, setTotalWeight] = useState(0);
+  // const [useablePercentage, setUseablePercentage] = useState(0);
   const history = useHistory();
   const { params } = useRouteMatch();
   const [userIsOwner, setUserIsOwner] = useState(false);
@@ -100,6 +95,7 @@ function Recipe({
       setUserIsOwner(data.Owner.username === userInfo.username);
     }
   }, [data, userInfo, isLoading, isError, history]);
+  console.log(data);
   return (
     <>
       {isLoading ? (
@@ -209,9 +205,9 @@ function Recipe({
             <Ingredients
               userIsOwner={userIsOwner}
               recipeid={params.id}
-              setTotalCalories={setTotalCalories}
-              setTotalWeight={setTotalWeight}
-              setUseablePercentage={setUseablePercentage}
+              // setTotalCalories={setTotalCalories}
+              // setTotalWeight={setTotalWeight}
+              // setUseablePercentage={setUseablePercentage}
               handleAuthenticatedEndpointRequest={
                 handleAuthenticatedEndpointRequest
               }

@@ -111,7 +111,7 @@ const RecipeList = (props) => {
       throw new Error(e);
     }
   };
-
+  console.log(data);
   return (
     <Box maxHeight="80vh" overflow="scroll" pt={3}>
       {isFetching && !isFetchingNextPage ? (

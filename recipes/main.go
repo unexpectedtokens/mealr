@@ -40,20 +40,20 @@ type Recipe struct{
 	OwnerID auth.UserID
 	Owner auth.UserModel
 	Title,
-	Source,
-	SourceURL,
-	ImageURL,
-	Description string
+	// Source,
+	// SourceURL,
+	ImageURL string
+	//Description string
 	Serves int
 	ServingSize string
 	CalsProvided bool
 	CalsPerServing int
-	Vegetarian bool
-	Vegan bool
-	TypeOfMeal string
+	// Vegetarian bool
+	// Vegan bool
+	//TypeOfMeal string
 	LikeByUser bool
 	Likes int
-	Public bool
+	//Public bool
 }
 
 type RecipeFoodIngredientList []RecipeIngredientFromFoodIngredient
@@ -67,10 +67,7 @@ type AllRecipeData struct{
 	Title string
 	Source string
 	ImageURL string
-	Vegan bool
-	Vegetarian bool
-	Likes int
-	LikedByUser bool
+	
 }
 
 //IsValidForDBInsertion checks if a scraped recipe is populated enough to be added to the db
@@ -102,14 +99,14 @@ func CalcPercentage(part, whole int) (percentageNotCalculated float32){
 	return
 }
 
-func CalculateCaloriesFromRecipe(fi RecipeFoodIngredientList) (amountOfCalories int){
+// func CalculateCaloriesFromRecipe(fi RecipeFoodIngredientList) (amountOfCalories int){
 	
-	for _, x := range fi{
-		amountOfCaloriesFloat := x.Amount / 100.0 * float64(x.CalsPer100)
-		amountOfCalories += int(amountOfCaloriesFloat)
-	}
-	return
-}
+// 	for _, x := range fi{
+// 		amountOfCaloriesFloat := x.Amount / 100.0 * float64(x.CalsPer100)
+// 		amountOfCalories += int(amountOfCaloriesFloat)
+// 	}
+// 	return
+// }
 //bulkinsert recipe ingredients snippet
 // func BulkInsert(unsavedRows []*ExampleRowStruct) error {
 //     valueStrings := make([]string, 0, len(unsavedRows))

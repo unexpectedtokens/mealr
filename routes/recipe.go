@@ -15,6 +15,7 @@ import (
 	"github.com/unexpectedtokens/mealr/mediahandler"
 	"github.com/unexpectedtokens/mealr/middleware"
 	"github.com/unexpectedtokens/mealr/recipes"
+	"github.com/unexpectedtokens/mealr/tokens"
 	"github.com/unexpectedtokens/mealr/util"
 )
 
@@ -109,20 +110,20 @@ func prepareRecipeStatements() error {
 		return err
 	}
 	statements.GetRecipeDetailSTMT, err = db.DBCon.Prepare(`
-	SELECT 
-	r.id,
-	r.title,
-	r.image_url,
-	r.source,
-	r.source_url,
-	r.vegan,
-	r.vegetarian,
-	r.type_of_meal, 
-	u.username,
-	r.description,
-	r.public
-	FROM recipes r INNER JOIN users u ON u.id = r.owner
-	WHERE r.id = $1;`)
+	SELECT r.id,
+		   r.title,
+	       r.image_url,
+		   u.username,
+		   (SELECT COUNT(p.id) FROM favourite_recipes p
+	WHERE p.recipeid = r.id ) as favourites, 
+	CASE WHEN (SELECT 1 FROM favourite_recipes p 
+		   WHERE p.userid = $1 
+		   AND p.recipeid = r.id) = 1 THEN 1 ELSE 0 END as likedbyuser
+		   
+	FROM recipes r
+	INNER JOIN users u 
+	ON u.id = r.owner WHERE r.id = $2;
+	`)
 	if err != nil {
 		return err
 	}
@@ -155,14 +156,9 @@ func prepareRecipeStatements() error {
 	statements.AllRecipeSTMT, err = db.DBCon.Prepare(`SELECT
 	r.id,
 	r.title,
-	r.image_url,
-	COUNT(f.id) AS f_count
-FROM recipes r
-LEFT JOIN favourite_recipes f on f.recipeid = r.id
-WHERE r.public OR r.owner = $1
-GROUP BY f.recipeid, r.id
-ORDER BY f_count DESC
-LIMIT $2 OFFSET $3;`)
+	r.image_url
+	FROM recipes r 
+	LIMIT $1 OFFSET $2;`)
 	if err != nil {
 		return fmt.Errorf("error creating allrecipeSTMT: %s", err.Error())
 	}
@@ -230,7 +226,7 @@ func fetchRecipeList(queryType listQuery, userid int64, limit, offset int) (json
 	var rows *sql.Rows
 	switch queryType {
 	case all:
-		rows, err = statements.AllRecipeSTMT.Query(userid, limit, offset)
+		rows, err = statements.AllRecipeSTMT.Query(limit, offset)
 	case fav:
 		rows, err = statements.FavouriteRecipeSTMT.Query(userid, limit, offset)
 	case mine:
@@ -248,14 +244,14 @@ func fetchRecipeList(queryType listQuery, userid int64, limit, offset int) (json
 	for rows.Next() {
 		x := recipes.AllRecipeData{}
 		var imageURL sql.NullString
-		rows.Scan(&x.ID, &x.Title, &imageURL, &x.Likes)
+		err = rows.Scan(&x.ID, &x.Title, &imageURL)
 		x.ImageURL = imageURL.String
-		likedByUserID := 0
-		err = statements.LikedByUserSTMT.QueryRow(userid, x.ID).Scan(&likedByUserID)
-		if err != nil && err != sql.ErrNoRows {
-			fmt.Println(err)
-		}
-		x.LikedByUser = likedByUserID > 0
+		// likedByUserID := 0
+		// err = statements.LikedByUserSTMT.QueryRow(userid, x.ID).Scan(&likedByUserID)
+		// if err != nil && err != sql.ErrNoRows {
+		// 	fmt.Println(err)
+		// }
+		// x.LikedByUser = likedByUserID > 0
 		if err == nil || err == sql.ErrNoRows {
 			response = append(response, x)
 		} else {
@@ -338,32 +334,48 @@ func FetchFavouriteRecipes(w http.ResponseWriter, r *http.Request, ps httprouter
 
 //RecipeDetail returns detailinfo about a recipe
 func RecipeDetail(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	var auth bool
+	var uid float64
+	if len(r.Header["Authorization"]) > 0 {
+		uid, auth = tokens.CheckIfAuth(r.Header["Authorization"][0])
+	}
+
 	id := ps.ByName("id")
 	recipe := recipes.Recipe{}
 	var imageURL sql.NullString
-	var sourceURL sql.NullString
-	var source sql.NullString
-	var vegan = sql.NullBool{}
-	var veggie = sql.NullBool{}
-	var description = sql.NullString{}
-	var public = sql.NullBool{}
-	err := statements.GetRecipeDetailSTMT.QueryRow(id).Scan(&recipe.ID, &recipe.Title, &imageURL, &source, &sourceURL, &vegan, &veggie, &recipe.TypeOfMeal, &recipe.Owner.Username, &description, &public)
+	// var sourceURL sql.NullString
+	// var source sql.NullString
+	// var vegan = sql.NullBool{}
+	// var veggie = sql.NullBool{}
+	// var description = sql.NullString{}
+	// var public = sql.NullBool{}
+	var userIDToQuery float64
+	if auth {
+		userIDToQuery = uid
+	}
+	var likedByUser int
+	err := statements.GetRecipeDetailSTMT.QueryRow(
+		userIDToQuery,
+		id,
+	).Scan(
+		&recipe.ID, &recipe.Title, &imageURL, &recipe.Owner.Username, &recipe.Likes, &likedByUser)
 	if err != nil {
 		fmt.Println(err)
 		util.ReturnNotFound(w)
 		return
 	}
 	recipe.ImageURL = imageURL.String
-	recipe.SourceURL = sourceURL.String
-	recipe.Source = source.String
-	recipe.Description = description.String
-	if vegan.Valid {
-		recipe.Vegan = vegan.Bool
-	}
-	if veggie.Valid {
-		recipe.Vegetarian = veggie.Bool
-	}
-	recipe.Public = public.Bool
+	recipe.LikeByUser = likedByUser == 1
+	// recipe.SourceURL = sourceURL.String
+	// recipe.Source = source.String
+	// recipe.Description = description.String
+	// if vegan.Valid {
+	// 	recipe.Vegan = vegan.Bool
+	// }
+	// if veggie.Valid {
+	// 	recipe.Vegetarian = veggie.Bool
+	// }
+	// recipe.Public = public.Bool
 	jsonResponse, err := json.Marshal(recipe)
 	if err != nil {
 		logging.ErrorLogger(err, "routes/recipe.go", "recipedetail")
@@ -629,14 +641,14 @@ func CreateRecipeView(w http.ResponseWriter, r *http.Request, _ httprouter.Param
 			return
 		}
 		var stmt *sql.Stmt
-		stmt, err = db.DBCon.Prepare("INSERT INTO recipes (owner, title, description, source, type_of_meal) VALUES($1, $2, $3, '/', $4) RETURNING id;")
+		stmt, err = db.DBCon.Prepare("INSERT INTO recipes (owner, title) VALUES($1, $2, ) RETURNING id;")
 		if err != nil {
 			logging.ErrorLogger(err, "routes/recipe.go", "CreateRecipeView")
 			util.HTTPServerError(w)
 			return
 		}
 		defer stmt.Close()
-		row := stmt.QueryRow(derivedID, parsedRequest.Title, parsedRequest.Description, parsedRequest.TypeOfMeal)
+		row := stmt.QueryRow(derivedID, parsedRequest.Title)
 		var returnedID int
 		err = row.Scan(&returnedID)
 		if err != nil {
@@ -679,7 +691,7 @@ func UpdateRecipeView(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 			fmt.Println("error:", parsedRequest)
 			return
 		}
-		_, err = db.DBCon.Exec("UPDATE recipes SET title = $1, description = $2, type_of_meal = $3, vegan = $4, vegetarian = $5, public = $6 WHERE id = $7;", parsedRequest.Title, parsedRequest.Description, parsedRequest.TypeOfMeal, parsedRequest.Vegan, parsedRequest.Vegetarian, parsedRequest.Public, id)
+		_, err = db.DBCon.Exec("UPDATE recipes SET title = $1 WHERE id = $2;", parsedRequest.Title, id)
 		if err != nil {
 			util.HTTPServerError(w)
 			fmt.Println(err)
