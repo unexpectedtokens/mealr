@@ -8,11 +8,17 @@ import {
   ListItem,
   ListItemSecondaryAction,
   IconButton,
+  Grid,
 } from "@material-ui/core";
 import {
   AccessTimeRounded,
+  AddOutlined,
+  ChevronLeft,
+  ChevronRight,
   DeleteOutlined,
+  PlayArrow,
   EditOutlined,
+  Notifications,
 } from "@material-ui/icons";
 
 import { useEffect, useState } from "react";
@@ -21,6 +27,52 @@ import config from "../../../../../../Config/config";
 import Confirm from "../../../../../Reusables/App/Confirm";
 import MethodStepAdder from "./MethodAdder";
 import MethodAlterer from "./MethodAlterer";
+
+const Instruction = ({ Instruction, userIsOwner }) => {
+  return (
+    <Grid item sm={12} xs={12} md={6} lg={4}>
+      <Card elevation={0}>
+        <Box p={3} display="flex" flexDirection="column">
+          <Box>
+            <Box pb={2} display="flex" justifyContent="space-between">
+              <Typography style={{ fontSize: 30, fontWeight: 700 }}>
+                Step {Instruction.StepNumber}
+              </Typography>
+              {userIsOwner ? (
+                <Box>
+                  <IconButton>
+                    <ChevronLeft />
+                  </IconButton>
+                  <IconButton>
+                    <ChevronRight />
+                  </IconButton>
+                  <IconButton>
+                    <EditOutlined />
+                  </IconButton>
+                </Box>
+              ) : null}
+            </Box>
+            <Typography style={{ fontSize: 22, opacity: 0.6 }}>
+              {/* {Instruction.StepDescription} */}
+              Heat the oven to 300 degrees celsius
+            </Typography>
+          </Box>
+          <Box pt={3} display="flex" justifyContent="flex-end">
+            <Box mr={2} display="flex" justifyContent="flex-end">
+              <Notifications />
+            </Box>
+            <Box display="flex" alignItems="center">
+              <Box mr={1} display="flex" alignItems="center">
+                <AccessTimeRounded />
+              </Box>
+              <Typography>30 minutes</Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Card>
+    </Grid>
+  );
+};
 
 const Methods = ({
   recipeid,
@@ -85,12 +137,13 @@ const Methods = ({
     }
   }, [isError, isLoading, data, client, setTotalTime]);
 
-  useEffect(() => {
-    setTotalTime(0);
-    let totalMinutes = 0;
-    data?.forEach((m) => (totalMinutes += parseFloat(m.DurationInMinutes)));
-    setTotalTime(totalMinutes);
-  });
+  // useEffect(() => {
+  //   setTotalTime(0);
+  //   let totalMinutes = 0;
+  //   data?.forEach((m) => (totalMinutes += parseFloat(m.DurationInMinutes)));
+  //   setTotalTime(totalMinutes);
+  // });
+  console.log(data);
   return (
     <>
       <Backdrop open={showMethodStepAdder} style={{ zIndex: 1001 }}>
@@ -98,12 +151,13 @@ const Methods = ({
           handleAuthenticatedEndpointRequest={
             handleAuthenticatedEndpointRequest
           }
-          buttonText="add method step"
-          firstInputName="new step"
+          buttonText="add instruction"
+          firstInputName="New Instruction"
           recipeid={recipeid}
           hide={() => setShowMethodStepAdder(false)}
         />
       </Backdrop>
+      {/*
       <Backdrop open={showMethodStepUpdater} style={{ zIndex: 1001 }}>
         <MethodAlterer
           handleAuthenticatedEndpointRequest={
@@ -115,94 +169,61 @@ const Methods = ({
           recipeid={recipeid}
           hide={() => setShowMethodStepUpdater(false)}
         />
-      </Backdrop>
+      </Backdrop> */}
 
-      <Confirm
+      {/* <Confirm
         hide={() => setShowConfirm(false)}
         itemName="step"
         showConfirm={showConfirm}
         confirm={deleteItem}
-      />
-      <Card>
-        <Box p={2}>
-          <Typography variant="h6">Method</Typography>
-          <Box pt={2}>
-            {isError && !isLoading ? (
-              <>
-                <Typography>
-                  Something went wrong fetching the steps for this recipe
-                </Typography>
-                <Button onClick={refetch}>Try Again</Button>
-              </>
-            ) : null}
-            {!isError && !isLoading ? (
-              <Box>
-                {data.length > 0 ? (
-                  <List>
-                    {data.map((x, i) => (
-                      <ListItem key={x.ID}>
-                        <Box
-                          display="flex"
-                          flexDirection="column"
-                          alignItems="flex-start"
-                        >
-                          <Box pb={1} style={{ maxWidth: "85%" }}>
-                            <Typography>
-                              <Typography
-                                component="span"
-                                style={{ fontWeight: 900 }}
-                              >
-                                Step {i + 1}:
-                              </Typography>{" "}
-                              {x.StepDescription}
-                            </Typography>
-                          </Box>
-                          <Box display="flex" alignItems="center">
-                            <Box pr={1} display="flex" alignItems="center">
-                              <AccessTimeRounded />
-                            </Box>
-                            {x.DurationInMinutes} minutes
-                          </Box>
-                          {userIsOwner ? (
-                            <ListItemSecondaryAction>
-                              <IconButton
-                                onClick={() => handleUpdateButtonClicked(x.ID)}
-                              >
-                                <EditOutlined />
-                              </IconButton>
-                              <IconButton
-                                onClick={() => handleDeleteButtonClicked(x.ID)}
-                              >
-                                <DeleteOutlined />
-                              </IconButton>
-                            </ListItemSecondaryAction>
-                          ) : null}
-                        </Box>
-                      </ListItem>
-                    ))}
-                  </List>
-                ) : (
-                  <Typography>There are no method steps yet</Typography>
-                )}
-              </Box>
-            ) : null}
+      /> */}
 
+      <Box py={3}>
+        <Box display="flex" justifyContent="space-between">
+          <Typography variant="h5" style={{ fontWeight: 700 }}>
+            Instructions
+          </Typography>
+          <Box display="flex">
             {userIsOwner ? (
-              <Box py={1} display="flex" justifyContent="flex-end">
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => {
-                    setShowMethodStepAdder(true);
-                  }}
-                >
-                  Add Method Step
-                </Button>
-              </Box>
+              <Button
+                color="primary"
+                variant="text"
+                onClick={() => setShowMethodStepAdder(true)}
+              >
+                <AddOutlined /> instruction
+              </Button>
             ) : null}
+            <Box ml={2}>
+              <Button color="primary" variant="contained" disableElevation>
+                Start cooking <PlayArrow />
+              </Button>
+            </Box>
           </Box>
         </Box>
-      </Card>
+        <Box pt={2}>
+          {isError && !isLoading ? (
+            <>
+              <Typography>
+                Something went wrong fetching the steps for this recipe
+              </Typography>
+              <Button onClick={refetch}>Try Again</Button>
+            </>
+          ) : null}
+          {!isError && !isLoading ? (
+            <Box>
+              {data.length > 0 ? (
+                <Grid container spacing={2}>
+                  {data.map((item) => (
+                    <Instruction userIsOwner={userIsOwner} Instruction={item} />
+                  ))}
+                </Grid>
+              ) : (
+                <Typography>There are no method steps yet</Typography>
+              )}
+            </Box>
+          ) : null}
+        </Box>
+      </Box>
     </>
   );
 };

@@ -52,11 +52,17 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: "#FFF", //theme.palette.primary.contrastText,
     maxHeight: "100vh",
     height: "100%",
+    width: "100%",
     padding: "2rem 1rem",
     zIndex: 1001,
+    //position: "absolute",
+    // top: 0,
+    // left: 0,
   },
   DrawerGridItem: {
     zIndex: 1000,
+    //height: "100%",
+    backgroundColor: "#fff",
     borderRight: "1px solid #eee",
     [theme.breakpoints.down("sm")]: {
       position: "absolute",
@@ -80,9 +86,9 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   MenuOpenButton: {
-    [theme.breakpoints.up("md")]: {
-      display: "none",
-    },
+    // [theme.breakpoints.up("md")]: {
+    //   display: "none",
+    // },
   },
   SiteBody: {
     background: `linear-gradient(to bottom right, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
@@ -109,6 +115,7 @@ function Layout({
   userInfo,
 }) {
   const [sideNavOpen, setSideNavOpen] = useState(false);
+  const [sideExpanded, setSideExpanded] = useState(false);
   const theme = useTheme();
   const smallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const classes = useStyles();
@@ -117,9 +124,9 @@ function Layout({
       <Grid container className={classes.MainContainer}>
         <Grid
           item
-          xl={2}
-          lg={2}
-          md={3}
+          xl={sideExpanded ? 2 : 1}
+          lg={sideExpanded ? 2 : 1}
+          md={sideExpanded ? 3 : 1}
           style={{
             right: smallScreen && sideNavOpen ? 0 : "100%",
           }}
@@ -140,6 +147,7 @@ function Layout({
                 <Logo
                   dark
                   orientation={smallScreen ? "vertical" : "horizontal"}
+                  hideText={!sideExpanded}
                 />
               </Box>
               {smallScreen ? <Box> </Box> : null}
@@ -200,28 +208,41 @@ function Layout({
                       if (smallScreen) setSideNavOpen(false);
                     }}
                   >
-                    {link.label}
+                    {sideExpanded ? link.label : ""}
                   </Button>
                 );
               })}
             </Box>
-            <Box pb={2}>
-              <Typography align="center">
-                Logged in as{" "}
-                <Typography component="span" color="primary">
-                  {userInfo.username}
+            {sideExpanded ? (
+              <Box pb={2}>
+                <Typography align="center">
+                  Logged in as{" "}
+                  <Typography component="span" color="primary">
+                    {userInfo.username}
+                  </Typography>
                 </Typography>
-              </Typography>
-            </Box>
+              </Box>
+            ) : null}
+
             <Button
               onClick={handleLogoutButtonPressed}
               startIcon={<ExitToAppOutlined />}
             >
-              Log out
+              {sideExpanded ? "Log out" : ""}
             </Button>
           </Box>
         </Grid>
-        <Grid item xl={10} lg={10} md={9} sm={12} xs={12}>
+        {/* xl={sideExpanded ? 2 : 1}
+          lg={sideExpanded ? 2 : 1}
+          md={sideExpanded ? 3 : 1} */}
+        <Grid
+          item
+          xl={sideExpanded ? 10 : 11}
+          lg={sideExpanded ? 10 : 11}
+          md={sideExpanded ? 9 : 11}
+          sm={12}
+          xs={12}
+        >
           <Box
             px={smallScreen ? 1 : 2}
             pb={smallScreen ? 1 : 2}
@@ -231,7 +252,11 @@ function Layout({
             <Toolbar className={classes.MainScreenNav}>
               <IconButton
                 className={classes.MenuOpenButton}
-                onClick={() => setSideNavOpen((cur) => !cur)}
+                onClick={() =>
+                  smallScreen
+                    ? setSideNavOpen((cur) => !cur)
+                    : setSideExpanded((cur) => !cur)
+                }
               >
                 <MenuOutlined />
               </IconButton>

@@ -131,10 +131,8 @@ func getDataFromToken(token *jwt.Token) (float64, time.Time, error) {
 	if claims, ok := token.Claims.(jwt.MapClaims); ok {
 		switch exp := claims["exp"].(type) {
 		case float64:
-			fmt.Println("its a float")
 			tm = time.Unix(int64(exp), 0)
 		case json.Number:
-			fmt.Println("its a json number")
 			v, _ := exp.Int64()
 			tm = time.Unix(v, 0)
 		}

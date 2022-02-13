@@ -25,7 +25,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function Logo({ dark, orientation }) {
+function Logo({ dark, orientation, hideText }) {
   const classes = useStyles();
   const history = useHistory();
   return (
@@ -36,12 +36,14 @@ function Logo({ dark, orientation }) {
       alignItems="center"
     >
       <img src={logoLight} alt="" width={30} />
-      <Box pl={orientation === "horizontal" ? 1 : 0}>
-        <Typography className={dark ? classes.Logodark : classes.Logo}>
-          <span className={dark ? classes.SpanDark : classes.Span}>Lem</span>
-          Bas
-        </Typography>
-      </Box>
+      {hideText ? null : (
+        <Box pl={orientation === "horizontal" ? 1 : 0}>
+          <Typography className={dark ? classes.Logodark : classes.Logo}>
+            <span className={dark ? classes.SpanDark : classes.Span}>Lem</span>
+            Bas
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 }

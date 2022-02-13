@@ -6,53 +6,56 @@ import (
 	"github.com/unexpectedtokens/mealr/auth"
 )
 
-type Ingredient struct{
-	ID int64
+type Ingredient struct {
+	ID          int64
 	Measurement string
-	Amount float64
-	Title string
+	Amount      float64
+	Title       string
 }
 
-type RecipeIngredientFromFoodIngredient struct{
-	ID int64
-	Amount float64
+type RecipeIngredientFromFoodIngredient struct {
+	ID               int64
+	Amount           float64
 	FoodIngredientID int64
 	FoodIngredient
 }
 
-type FoodIngredient struct{
-	ID int64
-	Name string
-	CalsPer100 int
+type FoodIngredient struct {
+	ID          int64
+	Name        string
+	CalsPer100  int
 	ServingUnit string
 }
 
-type MethodStep struct{
+type MethodStep struct {
 	ID int64
+	ActionAfterTimer,
 	StepDescription string
 	DurationInMinutes float32
-	TimeStampAdded time.Time
+	TimeStampAdded    time.Time
+	StepNumber,
+	TimerDuration int
 }
 
 //Recipe is a representation of a recipe in the database. It is used in the scraper and in the auth routes
-type Recipe struct{
-	ID int64
+type Recipe struct {
+	ID      int64
 	OwnerID auth.UserID
-	Owner auth.UserModel
+	Owner   auth.UserModel
 	Title,
 	// Source,
 	// SourceURL,
 	ImageURL string
 	//Description string
-	Serves int
-	ServingSize string
-	CalsProvided bool
+	Serves         int
+	ServingSize    string
+	CalsProvided   bool
 	CalsPerServing int
 	// Vegetarian bool
 	// Vegan bool
 	//TypeOfMeal string
 	LikeByUser bool
-	Likes int
+	Likes      int
 	//Public bool
 }
 
@@ -60,14 +63,12 @@ type RecipeFoodIngredientList []RecipeIngredientFromFoodIngredient
 type IngredientsMisc []Ingredient
 type MethodFromRecipe []string
 
-
 //AllRecipeData if the form in which the recipe list is represented
-type AllRecipeData struct{
-	ID int64
-	Title string
-	Source string
+type AllRecipeData struct {
+	ID       int64
+	Title    string
+	Source   string
 	ImageURL string
-	
 }
 
 //IsValidForDBInsertion checks if a scraped recipe is populated enough to be added to the db
@@ -77,30 +78,28 @@ func (c *Recipe) IsValidForDBInsertion() (valid bool) {
 	return valid
 }
 
-
-
 //DayInPlan is a day in a weeklong mealplan
-type DayInPlan struct{
-	Order int
+type DayInPlan struct {
+	Order     int
 	DayOfWeek string
-	Recipes []AllRecipeData
+	Recipes   []AllRecipeData
 }
 
 //Mealplan is the response data that is sent back on mealplan generation
-type Mealplan struct{
-	ID int64
-	UserID auth.UserID
+type Mealplan struct {
+	ID        int64
+	UserID    auth.UserID
 	CreatedOn time.Time
-	Days []DayInPlan
+	Days      []DayInPlan
 }
 
-func CalcPercentage(part, whole int) (percentageNotCalculated float32){
+func CalcPercentage(part, whole int) (percentageNotCalculated float32) {
 	percentageNotCalculated = float32(part) / float32(whole) * 100.0
 	return
 }
 
 // func CalculateCaloriesFromRecipe(fi RecipeFoodIngredientList) (amountOfCalories int){
-	
+
 // 	for _, x := range fi{
 // 		amountOfCaloriesFloat := x.Amount / 100.0 * float64(x.CalsPer100)
 // 		amountOfCalories += int(amountOfCaloriesFloat)
