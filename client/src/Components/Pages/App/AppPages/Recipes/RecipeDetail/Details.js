@@ -17,6 +17,9 @@ const useStyles = makeStyles((theme) => ({
     paddingLeft: "40px",
     position: "relative",
     marginBottom: "100px",
+    [theme.breakpoints.down("sm")]: {
+      paddingLeft: "15px",
+    },
   },
   image: {
     width: "150px",
@@ -30,15 +33,25 @@ const useStyles = makeStyles((theme) => ({
     alignItems: "stretch",
     overflow: "hidden",
     border: "10px solid #fff",
+    [theme.breakpoints.down("sm")]: {
+      width: 120,
+      height: 120,
+    },
   },
   recipeTitle: {
     color: "#fff",
     fontWeight: "700",
     fontSize: 30,
+    [theme.breakpoints.down("sm")]: {
+      fontSize: 20,
+    },
   },
   recipeCreator: {
     color: "#FFE693",
     fontSize: 20,
+    [theme.breakpoints.down("sm")]: {
+      fontSize: 15,
+    },
   },
 
   likeDisplayText: {

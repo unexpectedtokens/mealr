@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS methods_from_recipe(
 	id serial PRIMARY KEY,
 	recipeid INT NOT NULL,
 	method VARCHAR(2000),
+	stepnr INT NOT NULL DEFAULT 1,
 	moment_added TIMESTAMP NOT NULL DEFAULT now(),
 	duration_in_minutes NUMERIC NOT NULL DEFAULT 0,
 	timer_duration NUMERIC NOT NULL DEFAULT 0,

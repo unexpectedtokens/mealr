@@ -181,14 +181,7 @@ function Recipe({ userInfo, handleAuthenticatedEndpointRequest }) {
                     />
                   </Grid>
                   <Grid item md={6} sm={12} xs={12}>
-                    <Methods
-                      recipeid={params.id}
-                      userIsOwner={userIsOwner}
-                      handleAuthenticatedEndpointRequest={
-                        handleAuthenticatedEndpointRequest
-                      }
-                      setTotalTime={setTotalTime}
-                    />
+                    
                   </Grid>
                 </Grid>
               </Grid>
@@ -211,6 +204,14 @@ function Recipe({ userInfo, handleAuthenticatedEndpointRequest }) {
               handleAuthenticatedEndpointRequest={
                 handleAuthenticatedEndpointRequest
               }
+            />
+            <Methods
+              recipeid={params.id}
+              userIsOwner={userIsOwner}
+              handleAuthenticatedEndpointRequest={
+                handleAuthenticatedEndpointRequest
+              }
+              //setTotalTime={setTotalTime}
             />
           </Container>
         </>

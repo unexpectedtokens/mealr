@@ -1,8 +1,23 @@
-import { Box, Button, Paper, TextField } from "@material-ui/core";
+import {
+  Box,
+  Button,
+  makeStyles,
+  Paper,
+  TextField,
+  Typography,
+} from "@material-ui/core";
 import { useSnackbar } from "notistack";
 import { useState } from "react";
 import { useQueryClient } from "react-query";
 import config from "../../../../../../Config/config";
+
+const useStyle = makeStyles((theme) => ({
+  input: {
+    backgroundColor: theme.palette.grey[100],
+    borderRadius: "5px",
+    border: "none",
+  },
+}));
 
 const MethodStepAdder = ({
   recipeid,
@@ -14,6 +29,7 @@ const MethodStepAdder = ({
   const [newMethodStep, setNewMethodStep] = useState("");
   const [duration, setDuration] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
+  const classes = useStyle();
   const handleHide = () => {
     setNewMethodStep("");
     setDuration(0);
@@ -45,24 +61,36 @@ const MethodStepAdder = ({
     setDuration(val);
   };
   return (
-    <Paper style={{ minWidth: "50%" }}>
-      <Box p={2}>
+    <Paper style={{ minWidth: "60%" }}>
+      <Box p={3}>
+        <Box pb={2}>
+          <Typography variant="h4">Add a new instruction</Typography>
+        </Box>
         <TextField
           multiline
           type="text"
           onChange={(e) => setNewMethodStep(e.target.value)}
           value={newMethodStep}
           fullWidth
-          variant="outlined"
+          variant="filled"
           label={firstInputName}
+          InputProps={{
+            className: classes.input,
+          }}
+          inputProps={{
+            className: classes.input,
+          }}
         />
-        <Box p={2}>
+        <Box mt={2}>
           <TextField
             type="number"
             onChange={(e) => handleDurationValChanged(e.target.value)}
             value={duration}
             fullWidth
-            variant="outlined"
+            variant="filled"
+            inputProps={{
+              className: classes.input,
+            }}
             label="Duration in minutes"
           />
         </Box>
