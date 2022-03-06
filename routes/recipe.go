@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -101,7 +102,7 @@ func prepareRecipeStatements() error {
 	if err != nil {
 		return err
 	}
-	statements.GetMethodFromRecipeSTMT, err = db.DBCon.Prepare("SELECT id, method, moment_added, duration_in_minutes, timer_duration, action_after_timer  FROM methods_from_recipe WHERE recipeid=$1;")
+	statements.GetMethodFromRecipeSTMT, err = db.DBCon.Prepare("SELECT id, method, duration_in_minutes, timer_duration, action_after_timer, stepnr  FROM methods_from_recipe WHERE recipeid=$1;")
 	if err != nil {
 		return err
 	}
@@ -132,7 +133,7 @@ func prepareRecipeStatements() error {
 		return err
 	}
 
-	statements.MethodStepCreateSTMT, err = db.DBCon.Prepare("INSERT INTO methods_from_recipe (recipeid, method, moment_added, duration_in_minutes, action_after_timer, timer_duration) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;")
+	statements.MethodStepCreateSTMT, err = db.DBCon.Prepare("INSERT INTO methods_from_recipe (recipeid, method, moment_added, duration_in_minutes, action_after_timer, timer_duration, stepnr) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id;")
 	if err != nil {
 		return err
 	}
@@ -145,7 +146,7 @@ func prepareRecipeStatements() error {
 	if err != nil {
 		return err
 	}
-	statements.MethodStepUpdateSTMT, err = db.DBCon.Prepare("UPDATE methods_from_recipe SET duration_in_minutes = $1, method = $2 WHERE id = $3;")
+	statements.MethodStepUpdateSTMT, err = db.DBCon.Prepare("UPDATE methods_from_recipe SET duration_in_minutes = $1, method = $2, timer_duration = $3, action_after_timer = $4 WHERE id = $5;")
 	if err != nil {
 		return fmt.Errorf("error creating update methodstep statement: %s", err.Error())
 	}
@@ -162,34 +163,34 @@ func prepareRecipeStatements() error {
 	if err != nil {
 		return fmt.Errorf("error creating allrecipeSTMT: %s", err.Error())
 	}
-	statements.MyRecipeSTMT, err = db.DBCon.Prepare(`SELECT
-  r.id,
-  r.title,
-  r.image_url,
-  COUNT(f.id) AS f_count
-FROM recipes r
-LEFT JOIN favourite_recipes f on f.recipeid = r.id
-WHERE r.owner = $1
-GROUP BY r.id, f.recipeid
-ORDER BY f_count DESC
-LIMIT $2 OFFSET $3;`)
-	if err != nil {
-		return fmt.Errorf("error creating MyRecipeSTMT: %s", err.Error())
-	}
-	statements.FavouriteRecipeSTMT, err = db.DBCon.Prepare(`SELECT
-	r.id,
-	r.title,
-	r.image_url,
-	COUNT(f.id) AS f_count
-	FROM recipes r
-	LEFT JOIN favourite_recipes f on f.recipeid = r.id
-	WHERE f.userid = $1 AND r.public OR f.userid = $1 AND r.owner = $1
-	GROUP BY r.id, f.id
-	ORDER BY f_count DESC
-	LIMIT $2 OFFSET $3;`)
-	if err != nil {
-		return fmt.Errorf("error creating favRecipeSTMT: %s", err.Error())
-	}
+	// 	statements.MyRecipeSTMT, err = db.DBCon.Prepare(`SELECT
+	//   r.id,
+	//   r.title,
+	//   r.image_url,
+	//   COUNT(f.id) AS f_count
+	// FROM recipes r
+	// LEFT JOIN favourite_recipes f on f.recipeid = r.id
+	// WHERE r.owner = $1
+	// GROUP BY r.id, f.recipeid
+	// ORDER BY f_count DESC
+	// LIMIT $2 OFFSET $3;`)
+	// 	if err != nil {
+	// 		return fmt.Errorf("error creating MyRecipeSTMT: %s", err.Error())
+	// 	}
+	// 	statements.FavouriteRecipeSTMT, err = db.DBCon.Prepare(`SELECT
+	// 	r.id,
+	// 	r.title,
+	// 	r.image_url,
+	// 	COUNT(f.id) AS f_count
+	// 	FROM recipes r
+	// 	LEFT JOIN favourite_recipes f on f.recipeid = r.id
+	// 	WHERE f.userid = $1 AND r.public OR f.userid = $1 AND r.owner = $1
+	// 	GROUP BY r.id, f.id
+	// 	ORDER BY f_count DESC
+	// 	LIMIT $2 OFFSET $3;`)
+	// 	if err != nil {
+	// 		return fmt.Errorf("error creating favRecipeSTMT: %s", err.Error())
+	// 	}
 	statements.LikedByUserSTMT, err = db.DBCon.Prepare("SELECT id FROM favourite_recipes WHERE userid = $1 AND recipeid = $2;")
 	if err != nil {
 		return fmt.Errorf("error preprating likedbyuser statement: %s", err.Error())
@@ -514,22 +515,38 @@ func RecipeMethodStepCreate(w http.ResponseWriter, r *http.Request, ps httproute
 			auth.ReturnUnauthorized(w)
 			return
 		}
+
 		var methodStep recipes.MethodStep
 		err := json.NewDecoder(r.Body).Decode(&methodStep)
+
 		if err != nil {
 			util.ReturnBadRequest(w)
 			fmt.Println(err)
 			return
 		}
+		count, err := recipes.GetInstructionsCount(db.DBCon, id)
+		if err != nil {
+			fmt.Println(err)
+			util.HTTPServerError(w)
+		}
+		stepnr := count + 1
+		fmt.Println(methodStep)
 		methodStep.TimeStampAdded = time.Now()
 		var methodID int64
-		err = statements.MethodStepCreateSTMT.QueryRow(id, methodStep.StepDescription, methodStep.TimeStampAdded, methodStep.DurationInMinutes, "take off fire", 3).Scan(&methodID)
+		var actionAfterTimer string
+		var timerduration float32
+		if methodStep.Timer {
+			actionAfterTimer = methodStep.ActionAfterTimer
+			timerduration = float32(methodStep.TimerDuration)
+		}
+		err = statements.MethodStepCreateSTMT.QueryRow(id, methodStep.StepDescription, methodStep.TimeStampAdded, methodStep.DurationInMinutes, actionAfterTimer, timerduration, stepnr).Scan(&methodID)
 		if err != nil {
 			util.HTTPServerError(w)
 			fmt.Println(err)
 			return
 		}
 		methodStep.ID = methodID
+		methodStep.StepNumber = stepnr
 		jsonResponse, _ := json.Marshal(methodStep)
 		w.WriteHeader(http.StatusOK)
 		w.Write(jsonResponse)
@@ -561,7 +578,19 @@ func RecipeMethodStepUpdateView(w http.ResponseWriter, r *http.Request, ps httpr
 			fmt.Println(err)
 			return
 		}
-		_, err = statements.MethodStepUpdateSTMT.Exec(methodStep.DurationInMinutes, methodStep.StepDescription, methodStepID)
+		var timerDuration float32
+		var actionAfterTimer string
+		if methodStep.Timer {
+			timerDuration = methodStep.TimerDuration
+			actionAfterTimer = methodStep.ActionAfterTimer
+		}
+		_, err = statements.MethodStepUpdateSTMT.Exec(
+			methodStep.DurationInMinutes,
+			methodStep.StepDescription,
+			timerDuration,
+			actionAfterTimer,
+			methodStepID,
+		)
 		if err != nil {
 			util.HTTPServerError(w)
 			fmt.Println(err)
@@ -571,6 +600,82 @@ func RecipeMethodStepUpdateView(w http.ResponseWriter, r *http.Request, ps httpr
 	} else {
 		util.HTTPServerError(w)
 		return
+	}
+}
+
+type step struct {
+	StepID,
+	ChangingTo int64
+}
+
+type orderReplaceBody struct {
+	Step1,
+	Step2 step
+}
+
+func (o orderReplaceBody) Validate() bool {
+	return o.Step1.ChangingTo != 0 && o.Step2.ChangingTo != 0
+}
+
+func MethodStepOrderReplace(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	idString := ps.ByName("id")
+	id, err := getIDfromString(idString)
+	if err != nil {
+		util.ReturnBadRequest(w)
+		fmt.Println(err)
+		return
+	}
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok {
+		err := checkIfRequesteeIsRecipeOwner(id, derivedID)
+		if err != nil {
+			auth.ReturnUnauthorized(w)
+			return
+		}
+		var methodStep orderReplaceBody
+		err = json.NewDecoder(r.Body).Decode(&methodStep)
+		if err != nil {
+			util.ReturnBadRequest(w)
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(methodStep)
+		ctx := context.Background()
+		tx, err := db.DBCon.BeginTx(ctx, nil)
+		if err != nil {
+			util.HTTPServerError(w)
+			fmt.Println(err)
+			return
+		}
+
+		_, err = tx.Exec(
+			"UPDATE methods_from_recipe SET stepnr = $1 WHERE id = $2",
+			methodStep.Step1.ChangingTo,
+			methodStep.Step1.StepID,
+		)
+		if err != nil {
+			tx.Rollback()
+			util.HTTPServerError(w)
+			return
+		}
+
+		_, err = tx.Exec(
+			"UPDATE methods_from_recipe SET stepnr = $1 WHERE id = $2",
+			methodStep.Step2.ChangingTo,
+			methodStep.Step2.StepID,
+		)
+		if err != nil {
+			tx.Rollback()
+			util.HTTPServerError(w)
+			return
+		}
+		err = tx.Commit()
+		if err != nil {
+			util.HTTPServerError(w)
+			fmt.Println(err)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+
 	}
 }
 
@@ -612,8 +717,10 @@ func RecipeMethodDetail(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	methods := []recipes.MethodStep{}
 	for rows.Next() {
 		var step recipes.MethodStep
-		rows.Scan(&step.ID, &step.StepDescription, &step.TimeStampAdded, &step.DurationInMinutes)
-		methods = append(methods, step)
+		err = rows.Scan(&step.ID, &step.StepDescription, &step.DurationInMinutes, &step.TimerDuration, &step.ActionAfterTimer, &step.StepNumber)
+		if err == nil {
+			methods = append(methods, step)
+		}
 	}
 	response, err := json.Marshal(methods)
 	if err != nil {
@@ -641,14 +748,14 @@ func CreateRecipeView(w http.ResponseWriter, r *http.Request, _ httprouter.Param
 			return
 		}
 		var stmt *sql.Stmt
-		stmt, err = db.DBCon.Prepare("INSERT INTO recipes (owner, title) VALUES($1, $2, ) RETURNING id;")
+		stmt, err = db.DBCon.Prepare("INSERT INTO recipes (owner, title, serves) VALUES($1, $2, $3 ) RETURNING id;")
 		if err != nil {
 			logging.ErrorLogger(err, "routes/recipe.go", "CreateRecipeView")
 			util.HTTPServerError(w)
 			return
 		}
 		defer stmt.Close()
-		row := stmt.QueryRow(derivedID, parsedRequest.Title)
+		row := stmt.QueryRow(derivedID, parsedRequest.Title, parsedRequest.Serves)
 		var returnedID int
 		err = row.Scan(&returnedID)
 		if err != nil {
