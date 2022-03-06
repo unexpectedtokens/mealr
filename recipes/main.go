@@ -1,6 +1,7 @@
 package recipes
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/unexpectedtokens/mealr/auth"
@@ -33,8 +34,9 @@ type MethodStep struct {
 	StepDescription string
 	DurationInMinutes float32
 	TimeStampAdded    time.Time
-	StepNumber,
-	TimerDuration int
+	StepNumber        int
+	TimerDuration     float32
+	Timer             bool
 }
 
 //Recipe is a representation of a recipe in the database. It is used in the scraper and in the auth routes
@@ -96,6 +98,17 @@ type Mealplan struct {
 func CalcPercentage(part, whole int) (percentageNotCalculated float32) {
 	percentageNotCalculated = float32(part) / float32(whole) * 100.0
 	return
+}
+
+func GetInstructionsCount(db *sql.DB, id int64) (count int, err error) {
+	err = db.QueryRow("SELECT COUNT(id) FROM methods_from_recipe WHERE recipeid = $1;", id).Scan(&count)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil
+		}
+		return 0, err
+	}
+	return count, nil
 }
 
 // func CalculateCaloriesFromRecipe(fi RecipeFoodIngredientList) (amountOfCalories int){

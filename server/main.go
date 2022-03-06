@@ -38,19 +38,26 @@ func handleRequests() {
 
 	//RECIPE RELATED
 	router.GET("/api/recipes/listall/", applyMiddleware(routes.AllRecipes, middleware.AuthorizeMiddleware))
-	router.GET("/api/recipes/detail/:id/mi/", applyMiddleware(routes.RecipeIngredientDetail))
-	router.POST("/api/recipes/detail/:id/mi", applyMiddleware(routes.RecipeMiscIngredientCreate, middleware.AuthorizeMiddleware))
-	router.DELETE("/api/recipes/detail/:id/deletemi/:miid", applyMiddleware(routes.RecipeMiscIngredientDelete, middleware.AuthorizeMiddleware))
-	router.DELETE("/api/recipes/detail/:id/method/:stepid", applyMiddleware(routes.RecipeMethodStepDelete, middleware.AuthorizeMiddleware))
-	router.PATCH("/api/recipes/detail/:id/method/:stepid", applyMiddleware(routes.RecipeMethodStepUpdateView, middleware.AuthorizeMiddleware))
-	router.GET("/api/recipes/detail/:id/method/", applyMiddleware(routes.RecipeMethodDetail))
-	router.POST("/api/recipes/detail/:id/method/", applyMiddleware(routes.RecipeMethodStepCreate, middleware.AuthorizeMiddleware))
 	router.GET("/api/recipes/listfav/", applyMiddleware(routes.FetchFavouriteRecipes, middleware.AuthorizeMiddleware))
 	router.GET("/api/recipes/listmine/", applyMiddleware(routes.MyRecipes, middleware.AuthorizeMiddleware))
 	router.GET("/api/recipes/detail/:id", applyMiddleware(routes.RecipeDetail))
 	router.PATCH("/api/recipes/detail/:id", applyMiddleware(routes.UpdateRecipeView, middleware.AuthorizeMiddleware))
 	router.POST("/api/recipes/create/", applyMiddleware(routes.CreateRecipeView, middleware.AuthorizeMiddleware))
+	//ingredientrelated
+	router.GET("/api/recipes/detail/:id/mi/", applyMiddleware(routes.RecipeIngredientDetail))
+	router.POST("/api/recipes/detail/:id/mi", applyMiddleware(routes.RecipeMiscIngredientCreate, middleware.AuthorizeMiddleware))
+	router.DELETE("/api/recipes/detail/:id/deletemi/:miid", applyMiddleware(routes.RecipeMiscIngredientDelete, middleware.AuthorizeMiddleware))
+	///METHOD RELATED
+	router.DELETE("/api/recipes/detail/:id/method/:stepid", applyMiddleware(routes.RecipeMethodStepDelete, middleware.AuthorizeMiddleware))
+	router.PATCH("/api/recipes/detail/:id/method/:stepid", applyMiddleware(routes.RecipeMethodStepUpdateView, middleware.AuthorizeMiddleware))
+	router.GET("/api/recipes/detail/:id/method/", applyMiddleware(routes.RecipeMethodDetail))
+	router.POST("/api/recipes/detail/:id/method/", applyMiddleware(routes.RecipeMethodStepCreate, middleware.AuthorizeMiddleware))
+	//Expects a switchstring. i.e: 4with5
+	router.PATCH("/api/recipes/detail/:id/switchsteps/", applyMiddleware(routes.MethodStepOrderReplace, middleware.AuthorizeMiddleware))
+	///
+	//Banner related
 	router.POST("/api/recipes/detail/:id/addbanner/", applyMiddleware(routes.RecipeBannerView, middleware.AuthorizeMiddleware))
+	///
 	router.GET("/api/recipes/allingredients/", applyMiddleware(routes.GetAllFoodIngredientsView))
 	router.POST("/api/recipes/like/:id", applyMiddleware(routes.AddToFavView, middleware.AuthorizeMiddleware))
 	router.DELETE("/api/recipes/like/:id", applyMiddleware(routes.RemoveFromFavView, middleware.AuthorizeMiddleware))
@@ -81,7 +88,7 @@ func handleRequests() {
 
 	_cors := cors.Options{
 		AllowedMethods: []string{"POST", "OPTIONS", "GET", "PUT", "UPDATE", "PATCH", "HEAD", "DELETE"},
-		AllowedOrigins: []string{"*"},
+		AllowedOrigins: []string{"http://localhost:3000"},
 		AllowedHeaders: []string{"*"},
 	}
 	//"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization"

@@ -8,18 +8,11 @@ CREATE TABLE IF NOT EXISTS recipes(
 	id serial PRIMARY KEY,
 	owner INT REFERENCES users(id),
 	title VARCHAR(300) NOT NULL,
-	description VARCHAR(3000),
 	image_url VARCHAR(200),
-	source VARCHAR(200),
-	source_url VARCHAR(200),
 	vegan BOOLEAN,
 	vegetarian BOOLEAN,
 	serves INT,
-	cals_provided BOOLEAN,
-	cals_per_serving INT,
-	serving_size int,
-	type_of_meal VARCHAR(9) NOT NULL,
-	public BOOLEAN NOT NULL DEFAULT 't'
+	serving_size int
 );
 
 

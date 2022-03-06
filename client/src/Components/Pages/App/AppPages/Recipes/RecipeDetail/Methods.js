@@ -8,6 +8,7 @@ import {
   IconButton,
   Grid,
   useMediaQuery,
+  Divider,
 } from "@material-ui/core";
 import {
   AccessTimeRounded,
@@ -69,6 +70,7 @@ const Instruction = ({
                   >
                     <ChevronRight />
                   </IconButton>
+
                   <IconButton
                     onClick={() => {
                       edit(Instruction.ID);
