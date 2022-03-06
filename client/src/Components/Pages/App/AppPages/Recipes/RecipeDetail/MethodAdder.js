@@ -1,6 +1,8 @@
 import {
   Box,
   Button,
+  Checkbox,
+  FormControlLabel,
   makeStyles,
   Paper,
   TextField,
@@ -11,13 +13,7 @@ import { useState } from "react";
 import { useQueryClient } from "react-query";
 import config from "../../../../../../Config/config";
 
-const useStyle = makeStyles((theme) => ({
-  input: {
-    backgroundColor: theme.palette.grey[100],
-    borderRadius: "5px",
-    border: "none",
-  },
-}));
+const useStyle = makeStyles((theme) => ({}));
 
 const MethodStepAdder = ({
   recipeid,
@@ -27,7 +23,10 @@ const MethodStepAdder = ({
   firstInputName,
 }) => {
   const [newMethodStep, setNewMethodStep] = useState("");
+  const [inclTimer, setInclTimer] = useState(false);
   const [duration, setDuration] = useState(0);
+  const [actionAfterTimer, setActionAfterTimer] = useState("");
+  const [timerDuration, setTimerDuration] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
   const classes = useStyle();
   const handleHide = () => {
@@ -44,6 +43,9 @@ const MethodStepAdder = ({
         JSON.stringify({
           DurationInMinutes: parseFloat(duration),
           StepDescription: newMethodStep,
+          Timer: inclTimer,
+          ActionAfterTimer: actionAfterTimer,
+          TimerDuration: parseFloat(timerDuration),
         })
       );
       const data = await response.json();
@@ -60,6 +62,7 @@ const MethodStepAdder = ({
     }
     setDuration(val);
   };
+
   return (
     <Paper style={{ minWidth: "60%" }}>
       <Box p={3}>
@@ -74,12 +77,6 @@ const MethodStepAdder = ({
           fullWidth
           variant="filled"
           label={firstInputName}
-          InputProps={{
-            className: classes.input,
-          }}
-          inputProps={{
-            className: classes.input,
-          }}
         />
         <Box mt={2}>
           <TextField
@@ -94,6 +91,43 @@ const MethodStepAdder = ({
             label="Duration in minutes"
           />
         </Box>
+        <Box>
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="medium"
+                checked={inclTimer}
+                onChange={() => setInclTimer((cur) => !cur)}
+                name="public"
+                color="primary"
+              />
+            }
+            label="Do you need a timer for this step?"
+          />
+        </Box>
+        {inclTimer ? (
+          <Box>
+            <Box>
+              <TextField
+                variant="filled"
+                value={timerDuration}
+                type="number"
+                label="Timer duration"
+                onChange={(e) => setTimerDuration(e.target.value)}
+              />
+            </Box>
+            <Box>
+              <TextField
+                variant="filled"
+                value={actionAfterTimer}
+                type="text"
+                label="What should happen after the timer?"
+                fullWidth
+                onChange={(e) => setActionAfterTimer(e.target.value)}
+              />
+            </Box>
+          </Box>
+        ) : null}
         <Box py={2} display="flex">
           <Box pr={1}>
             <Button onClick={handleHide} color="secondary">

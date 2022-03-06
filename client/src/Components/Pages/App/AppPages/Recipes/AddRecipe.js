@@ -20,21 +20,14 @@ const AddRecipe = ({ navigate, handleAuthenticatedEndpointRequest }) => {
   const Form = useFormik({
     initialValues: {
       title: "",
-      file: "",
-      vegan: false,
-      vegetarian: false,
-      preptime: "",
-      cookingtime: "",
-      description: "",
-      typeOfRecipe: "Breakfast",
+      serves: 1,
     },
     onSubmit: async (values) => {
       setLoading(true);
       try {
         const submitData = {
           Title: values.title,
-          TypeOfMeal: values.typeOfRecipe,
-          Description: values.description,
+          Serves: parseInt(values),
         };
         const response = await handleAuthenticatedEndpointRequest(
           `${config.API_URL}/api/recipes/create/`,
@@ -86,43 +79,20 @@ const AddRecipe = ({ navigate, handleAuthenticatedEndpointRequest }) => {
             required
           />
         </Box>
-        <Box p={1} pl={0} pr={0}>
+
+        <Box mb={2}>
           <TextField
-            value={Form.values.description}
-            type="text"
-            multiline
-            label="Description"
+            value={Form.values.serves}
+            onChange={Form.handleChange}
+            type="number"
+            id="serves"
+            name="serves"
             variant="outlined"
             fullWidth
-            id="description"
-            name="description"
-            onChange={Form.handleChange}
+            size="small"
+            required
+            label="How many people does this recipe serve?"
           />
-        </Box>
-        <Box mb={2}>
-          <FormControl fullWidth>
-            <InputLabel id="toml">Type of recipe</InputLabel>
-            <Select
-              labelId="toml"
-              fullWidth
-              variant="outlined"
-              //label="Type of recipe"
-              id="typeOfRecipe"
-              name="typeOfRecipe"
-              value={Form.values.typeOfRecipe}
-              onChange={Form.handleChange}
-            >
-              {["", "Breakfast", "Lunch", "Dinner", "Dessert", "Snack"].map(
-                (item) => {
-                  return (
-                    <MenuItem key={item} value={item}>
-                      {item ? item : "Unspecified"}
-                    </MenuItem>
-                  );
-                }
-              )}
-            </Select>
-          </FormControl>
         </Box>
       </FormContainer>
     </>
