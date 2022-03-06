@@ -3,15 +3,12 @@ import {
   Button,
   Box,
   Backdrop,
-  List,
-  ListItem,
   Typography,
   IconButton,
-  ListItemSecondaryAction,
 } from "@material-ui/core";
 import { DeleteOutlined, AddOutlined } from "@material-ui/icons";
 import config from "../../../../../../Config/config";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import IngAdder from "./IngAdder";
 import { useQuery, useQueryClient } from "react-query";
 import styled from "styled-components";
@@ -76,23 +73,7 @@ const Ingredients = ({
       console.log(e);
     }
   };
-  const deleteFoodIng = async (id) => {
-    try {
-      const response = await handleAuthenticatedEndpointRequest(
-        `${config.API_URL}/api/recipes/detail/${recipeid}/deletefi/${id}`,
-        "DELETE"
-      );
-      if (response.status === 200) {
-        client.setQueryData("foodIngredients", (old) =>
-          old.filter((fi) => fi.ID !== id)
-        );
-      } else {
-        console.log("nono");
-      }
-    } catch (e) {
-      console.log(e);
-    }
-  };
+
   const deleteItem = () => {
     console.log(
       client.getQueryData("foodIngredients"),

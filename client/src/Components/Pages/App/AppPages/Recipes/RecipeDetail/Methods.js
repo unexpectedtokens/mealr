@@ -4,11 +4,10 @@ import {
   Typography,
   Backdrop,
   Button,
-  List,
-  ListItem,
-  ListItemSecondaryAction,
+  useTheme,
   IconButton,
   Grid,
+  useMediaQuery,
 } from "@material-ui/core";
 import {
   AccessTimeRounded,
@@ -23,19 +22,26 @@ import {
 
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "react-query";
+
 import config from "../../../../../../Config/config";
 import Confirm from "../../../../../Reusables/App/Confirm";
 import MethodStepAdder from "./MethodAdder";
 import MethodAlterer from "./MethodAlterer";
 
-const Instruction = ({ Instruction, userIsOwner }) => {
+const Instruction = ({
+  Instruction,
+  userIsOwner,
+  edit,
+  setUpdateID,
+  setStepToAlter,
+}) => {
   return (
     <Grid item sm={12} xs={12} md={6} lg={4}>
       <Card elevation={0}>
         <Box p={3} display="flex" flexDirection="column">
           <Box>
             <Box pb={2} display="flex" justifyContent="space-between">
-              <Typography style={{ fontSize: 30, fontWeight: 700 }}>
+              <Typography style={{ fontSize: 25, fontWeight: 700 }}>
                 Step {Instruction.StepNumber}
               </Typography>
               {userIsOwner ? (
@@ -46,26 +52,34 @@ const Instruction = ({ Instruction, userIsOwner }) => {
                   <IconButton>
                     <ChevronRight />
                   </IconButton>
-                  <IconButton>
+                  <IconButton
+                    onClick={() => {
+                      setUpdateID(Instruction.ID);
+                      setStepToAlter(Instruction);
+                      edit(true);
+                    }}
+                  >
                     <EditOutlined />
                   </IconButton>
                 </Box>
               ) : null}
             </Box>
             <Typography style={{ fontSize: 22, opacity: 0.6 }}>
-              {/* {Instruction.StepDescription} */}
-              Heat the oven to 300 degrees celsius
+              {Instruction.StepDescription}
             </Typography>
           </Box>
           <Box pt={3} display="flex" justifyContent="flex-end">
-            <Box mr={2} display="flex" justifyContent="flex-end">
-              <Notifications />
-            </Box>
+            {Instruction.TimerDuration ? (
+              <Box mr={2} display="flex" justifyContent="flex-end">
+                <Notifications />
+              </Box>
+            ) : null}
+
             <Box display="flex" alignItems="center">
               <Box mr={1} display="flex" alignItems="center">
                 <AccessTimeRounded />
               </Box>
-              <Typography>30 minutes</Typography>
+              <Typography>{Instruction.DurationInMinutes} minutes</Typography>
             </Box>
           </Box>
         </Box>
@@ -85,7 +99,9 @@ const Methods = ({
   const [showConfirm, setShowConfirm] = useState(false);
   const [idToAlter, setIDToAlter] = useState(0);
   const [stepToAlter, setStepToAlter] = useState({});
+  const theme = useTheme();
   const client = useQueryClient();
+  const smallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const fetchMethodSteps = async () => {
     const response = await fetch(
       `${config.API_URL}/api/recipes/detail/${recipeid}/method/`
@@ -143,7 +159,7 @@ const Methods = ({
   //   data?.forEach((m) => (totalMinutes += parseFloat(m.DurationInMinutes)));
   //   setTotalTime(totalMinutes);
   // });
-  console.log(data);
+  console.log(data, smallScreen);
   return (
     <>
       <Backdrop open={showMethodStepAdder} style={{ zIndex: 1001 }}>
@@ -157,7 +173,7 @@ const Methods = ({
           hide={() => setShowMethodStepAdder(false)}
         />
       </Backdrop>
-      {/*
+
       <Backdrop open={showMethodStepUpdater} style={{ zIndex: 1001 }}>
         <MethodAlterer
           handleAuthenticatedEndpointRequest={
@@ -169,7 +185,7 @@ const Methods = ({
           recipeid={recipeid}
           hide={() => setShowMethodStepUpdater(false)}
         />
-      </Backdrop> */}
+      </Backdrop>
 
       {/* <Confirm
         hide={() => setShowConfirm(false)}
@@ -193,11 +209,19 @@ const Methods = ({
                 <AddOutlined /> instruction
               </Button>
             ) : null}
-            <Box ml={2}>
-              <Button color="primary" variant="contained" disableElevation>
-                Start cooking <PlayArrow />
-              </Button>
-            </Box>
+            {!isError && !isLoading && data.length > 0 ? (
+              <Box ml={2}>
+                {smallScreen ? (
+                  <IconButton color="primary">
+                    <PlayArrow />
+                  </IconButton>
+                ) : (
+                  <Button color="primary" variant="contained" disableElevation>
+                    Start Cookin <PlayArrow />
+                  </Button>
+                )}
+              </Box>
+            ) : null}
           </Box>
         </Box>
         <Box pt={2}>
@@ -214,7 +238,14 @@ const Methods = ({
               {data.length > 0 ? (
                 <Grid container spacing={2}>
                   {data.map((item) => (
-                    <Instruction userIsOwner={userIsOwner} Instruction={item} />
+                    <Instruction
+                      key={item.StepNumber}
+                      userIsOwner={userIsOwner}
+                      Instruction={item}
+                      edit={setShowMethodStepUpdater}
+                      setUpdateID={setIDToAlter}
+                      setStepToAlter={setStepToAlter}
+                    />
                   ))}
                 </Grid>
               ) : (
