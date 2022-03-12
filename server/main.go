@@ -81,8 +81,8 @@ func handleRequests(addr string) {
 	router.GET("/api/profile/", applyMiddleware(routes.GetProfileView, middleware.AuthorizeMiddleware))
 	router.PUT("/api/profile/update/", applyMiddleware(routes.UpdateProfileView, middleware.AuthorizeMiddleware))
 	router.GET("/api/profile/isvalid/", applyMiddleware(routes.ProfileValidForMealPlanGeneratorView, middleware.AuthorizeMiddleware))
-	router.GET("/site/*path", serveSPA)
-	router.NotFound = http.FileServer(http.Dir("./client/build"))
+	//router.GET("/site/*path", serveSPA)
+	//router.NotFound = http.FileServer(http.Dir("./client/build"))
 	router.GET("/ws_test", routes.MealPlanConnect)
 	//CORS SETTINGS
 
