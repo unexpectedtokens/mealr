@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
   MainContainer: {
     width: "100%",
     minHeight: "95vh",
-    backgroundColor: "#F5F8F4", //theme.palette.primary.contrastText,
+    backgroundColor: "#f6f6f6", //theme.palette.primary.contrastText,
     maxWidth: theme.breakpoints.values.xl,
     [theme.breakpoints.up("lg")]: {
       boxShadow: theme.shadows[3],

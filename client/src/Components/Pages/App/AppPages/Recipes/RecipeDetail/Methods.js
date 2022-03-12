@@ -198,9 +198,18 @@ const Methods = ({
     );
     if (response.status === 200) {
       client.setQueryData("methodSteps", (old) =>
-        old.filter((x) => x.ID !== idToAlter)
+        old
+          .filter((x) => x.StepNumber !== idToAlter)
+          .map((x) => {
+            if (x.StepNumber > idToAlter) {
+              return { ...x, StepNumber: x.StepNumber - 1 };
+            } else {
+              return x;
+            }
+          })
       );
     }
+    setShowMethodStepUpdater(false);
     setShowConfirm(false);
   };
   useEffect(() => {
@@ -238,6 +247,7 @@ const Methods = ({
           handleAuthenticatedEndpointRequest={
             handleAuthenticatedEndpointRequest
           }
+          handleDeleteButtonClicked={handleDeleteButtonClicked}
           stepid={stepToAlter.ID}
           curStep={stepToAlter}
           curStepDuration={stepToAlter.DurationInMinutes}
@@ -247,12 +257,12 @@ const Methods = ({
         />
       </Backdrop>
 
-      {/* <Confirm
+      <Confirm
         hide={() => setShowConfirm(false)}
-        itemName="step"
+        itemName="Instruction"
         showConfirm={showConfirm}
         confirm={deleteItem}
-      /> */}
+      />
 
       <Box py={3}>
         <Box display="flex" justifyContent="space-between">

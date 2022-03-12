@@ -6,6 +6,7 @@ import {
   FormControlLabel,
   Checkbox,
 } from "@material-ui/core";
+import { DeleteOutline } from "@material-ui/icons";
 import { useSnackbar } from "notistack";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "react-query";
@@ -16,6 +17,7 @@ const MethodAlterer = ({
   stepid,
   recipeid,
   handleAuthenticatedEndpointRequest,
+  handleDeleteButtonClicked,
 }) => {
   const [duration, setDuration] = useState(0);
   const [description, setDescription] = useState("");
@@ -103,7 +105,7 @@ const MethodAlterer = ({
               variant="outlined"
               label="description"
             />
-            <Box p={2}>
+            <Box pt={2}>
               <TextField
                 type="number"
                 onChange={(e) => handleDurationValChanged(e.target.value)}
@@ -128,19 +130,20 @@ const MethodAlterer = ({
               />
             </Box>
             {inclTimer ? (
-              <Box>
-                <Box>
+              <Box display="flex" mt={2}>
+                <Box flexGrow={1} pr={1}>
                   <TextField
-                    variant="filled"
+                    fullWidth
+                    variant="outlined"
                     value={timerDuration}
                     type="number"
                     label="Timer duration"
                     onChange={(e) => setTimerDuration(e.target.value)}
                   />
                 </Box>
-                <Box>
+                <Box flexGrow={1}>
                   <TextField
-                    variant="filled"
+                    variant="outlined"
                     value={actionAfterTimer}
                     type="text"
                     label="What should happen after the timer?"
@@ -158,6 +161,16 @@ const MethodAlterer = ({
               </Box>
               <Button
                 fullWidth
+                style={{ marginRight: "10px" }}
+                variant="contained"
+                disableElevation
+                color="secondary"
+                onClick={() => handleDeleteButtonClicked(curStep.StepNumber)}
+              >
+                <DeleteOutline /> Delete step
+              </Button>
+              <Button
+                fullWidth
                 variant="contained"
                 disabled={
                   description.length <= 2 ||
@@ -173,6 +186,7 @@ const MethodAlterer = ({
                 }
                 style={{ fontWeight: 700 }}
                 onClick={handleMethodStepUpdate}
+                disableElevation
               >
                 Save Step
               </Button>

@@ -193,7 +193,7 @@ const Ingredients = ({
                 >
                   {i.Title}
                 </Typography>
-                <Divider orientation="vertical" flexItem />
+
                 <Box display="flex" alignItems="center">
                   <Box pr={3}>
                     <Typography>

@@ -17,18 +17,28 @@ import (
 
 var migrationFileName = flag.String("filename", "initial_migration", "name of the specific file to parse for migration")
 
-func main(){
+func main() {
 	fmt.Println(21 << 20)
 	logging.InitLogging()
-	err := godotenv.Load()
-	if err != nil{
-		panic(err)
+
+	mode := os.Getenv("MODE")
+
+	if mode == "development" {
+		err := godotenv.Load("local.env")
+		if err != nil {
+			panic(err)
+		}
+	} else if mode == "staging" {
+		err := godotenv.Load("production.env")
+		if err != nil {
+			panic(err)
+		}
 	}
-	
-	err = mediahandler.InitiateConn(mediahandler.S3Config{
-		Region: os.Getenv("AWS_REGION"),
-		AKID: os.Getenv("AWS_AKI"),
-		SAK: os.Getenv("AWS_SAK"),
+
+	err := mediahandler.InitiateConn(mediahandler.S3Config{
+		Region:     os.Getenv("AWS_REGION"),
+		AKID:       os.Getenv("AWS_AKI"),
+		SAK:        os.Getenv("AWS_SAK"),
 		BucketName: "lembasbucket",
 	})
 	if err != nil {
@@ -38,28 +48,33 @@ func main(){
 	if err != nil {
 		panic(err)
 	}
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "3000"
+	}
+	addr := fmt.Sprintf(":%s", port)
 	fmt.Println("Succesfully connected to bucket")
 	flag.Parse()
 	util.SigningKey = []byte(os.Getenv("JWT_SECRET"))
-	if len(os.Args) > 1{
-		for _, x := range os.Args{
-			if x == "flush"{
+	if len(os.Args) > 1 {
+		for _, x := range os.Args {
+			if x == "flush" {
 				migrations.Flush()
 			}
-			if x == "migrate"{
+			if x == "migrate" {
 				migrations.RunMigrations(*migrationFileName)
 			}
-			if x == "scrape"{
+			if x == "scrape" {
 				//scraper.CollectRecipesBBC()
 				//scraper.CollectRecipesEYS()
 				scraper.CollectIngredients()
 			}
-			if x == "runserver"{
-				server.HTTPServer()
+			if x == "runserver" {
+				server.HTTPServer(addr)
 			}
 		}
-	}else{
-		server.HTTPServer()
+	} else {
+		server.HTTPServer(addr)
 	}
 }
-
