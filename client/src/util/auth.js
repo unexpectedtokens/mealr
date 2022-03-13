@@ -1,1 +1,1 @@
-export const refreshToken = (oldKey: String) => {};
+export const refreshToken = (oldKey) => {};

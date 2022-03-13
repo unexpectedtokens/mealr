@@ -1,11 +1,12 @@
 module github.com/unexpectedtokens/mealr
 
+// +heroku goVersion go1.17
 go 1.17
 
 require (
 	github.com/PuerkitoBio/goquery v1.8.0 // indirect
 	github.com/antchfx/htmlquery v1.2.4 // indirect
-	github.com/antchfx/xmlquery v1.3.9 // indirect
+	github.com/antchfx/xmlquery v1.3.10 // indirect
 	github.com/aws/aws-sdk-go v1.43.17
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -20,7 +21,7 @@ require (
 	github.com/lib/pq v1.10.4
 	github.com/rs/cors v1.8.2
 	github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca // indirect
-	github.com/stretchr/testify v1.5.1 // indirect
+	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	golang.org/x/crypto v0.0.0-20220312131142-6068a2e6cfdc
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
