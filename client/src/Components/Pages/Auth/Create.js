@@ -178,6 +178,7 @@ function Create({ classes, loading, setLoading, onAuthenticate }) {
             variant="contained"
             color="primary"
             fullWidth
+            disableElevation
             className={classes.submit}
             endIcon={!loading ? <ChevronRight /> : null}
           >
