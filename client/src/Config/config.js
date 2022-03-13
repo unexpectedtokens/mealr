@@ -1,5 +1,5 @@
 const config = {
-  API_URL: "/",
+  API_URL: "https://quiet-forest-60077.herokuapp.com",
 };
 
 // http://localhost:8080
