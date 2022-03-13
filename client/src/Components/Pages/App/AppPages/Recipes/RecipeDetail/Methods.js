@@ -8,14 +8,12 @@ import {
   IconButton,
   Grid,
   useMediaQuery,
-  Divider,
 } from "@material-ui/core";
 import {
   AccessTimeRounded,
   AddOutlined,
   ChevronLeft,
   ChevronRight,
-  DeleteOutlined,
   PlayArrow,
   EditOutlined,
   Notifications,

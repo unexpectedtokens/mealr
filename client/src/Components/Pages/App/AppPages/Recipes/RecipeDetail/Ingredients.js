@@ -5,7 +5,6 @@ import {
   Backdrop,
   Typography,
   IconButton,
-  Divider,
 } from "@material-ui/core";
 import { DeleteOutlined, AddOutlined } from "@material-ui/icons";
 import config from "../../../../../../Config/config";
