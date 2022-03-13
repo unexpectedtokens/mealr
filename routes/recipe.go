@@ -858,7 +858,7 @@ func UpdateRecipeView(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 			fmt.Println(err)
 			return
 		}
-		fmt.Println(parsedRequest)
+
 		w.WriteHeader(200)
 
 	}
@@ -882,7 +882,7 @@ func RecipeBannerView(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		http.Error(w, "Unable to parse image", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("file accepted")
+
 	// dst, err := os.Create(fmt.Sprintf("./tmp/images/%s", handler.Filename))
 	// if err != nil{
 	// 	panic(err)
@@ -893,7 +893,7 @@ func RecipeBannerView(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 
 		idstring := ps.ByName("id")
 		recipeid, err := getIDfromString(idstring)
-		fmt.Println("getting id from string")
+
 		if err != nil {
 			http.Error(w, "Unable to parse image", http.StatusBadRequest)
 			defer logging.ErrorLogger(err, "routes/recipe.go", "RecipeBannerView")
