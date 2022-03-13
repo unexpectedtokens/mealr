@@ -134,6 +134,7 @@ function Login({ classes, onAuthenticate }) {
           className={classes.submit}
           endIcon={!loading ? <ChevronRight /> : null}
           disabled={!loading && !valid}
+          disableElevation
         >
           {loading ? (
             <CircularProgress size="1.5rem" color="inherit" />

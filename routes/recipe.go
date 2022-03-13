@@ -679,6 +679,60 @@ func MethodStepOrderReplace(w http.ResponseWriter, r *http.Request, ps httproute
 	}
 }
 
+func MethodStepDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	idString := ps.ByName("id")
+	id, err := getIDfromString(idString)
+	if err != nil {
+		util.ReturnBadRequest(w)
+		fmt.Println(err)
+		return
+	}
+	stepNumberToDeleteString := ps.ByName("stepNumberToDelete")
+	sn, err := getIDfromString(stepNumberToDeleteString)
+	if err != nil {
+		util.ReturnBadRequest(w)
+		fmt.Println(err)
+		return
+	}
+	if derivedID, ok := r.Context().Value(middleware.ContextKey).(auth.UserID); ok {
+		err := checkIfRequesteeIsRecipeOwner(id, derivedID)
+		if err != nil {
+			auth.ReturnUnauthorized(w)
+			return
+		}
+		ctx := context.Background()
+		tx, err := db.DBCon.BeginTx(ctx, nil)
+		if err != nil {
+			util.HTTPServerError(w)
+			return
+		}
+		_, err = tx.Exec("DELETE FROM methods_from_recipe WHERE stepnr = $1 AND recipeid = $2;", sn, id)
+		if err != nil {
+			tx.Rollback()
+			util.HTTPServerError(w)
+			fmt.Println("error deleting:", err)
+			return
+		}
+		_, err = tx.Exec("UPDATE methods_from_recipe SET stepnr = stepnr - 1 WHERE stepnr > $1 AND recipeid = $2", sn, id)
+		if err != nil {
+			tx.Rollback()
+			util.HTTPServerError(w)
+			fmt.Println("error updating:", err)
+			return
+		}
+		err = tx.Commit()
+		if err != nil {
+
+			util.HTTPServerError(w)
+			fmt.Println(err)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	} else {
+		auth.ReturnUnauthorized(w)
+	}
+}
+
 func RecipeIngredientDetail(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	id := p.ByName("id")
 	rows, err := statements.GetMiscIngFromRecipeSTMT.Query(id)
@@ -804,7 +858,7 @@ func UpdateRecipeView(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 			fmt.Println(err)
 			return
 		}
-		fmt.Println(parsedRequest)
+
 		w.WriteHeader(200)
 
 	}
@@ -828,7 +882,7 @@ func RecipeBannerView(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		http.Error(w, "Unable to parse image", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("file accepted")
+
 	// dst, err := os.Create(fmt.Sprintf("./tmp/images/%s", handler.Filename))
 	// if err != nil{
 	// 	panic(err)
@@ -839,7 +893,7 @@ func RecipeBannerView(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 
 		idstring := ps.ByName("id")
 		recipeid, err := getIDfromString(idstring)
-		fmt.Println("getting id from string")
+
 		if err != nil {
 			http.Error(w, "Unable to parse image", http.StatusBadRequest)
 			defer logging.ErrorLogger(err, "routes/recipe.go", "RecipeBannerView")

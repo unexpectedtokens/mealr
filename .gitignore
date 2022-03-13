@@ -1,6 +1,8 @@
 .env
+local.env
+production.env
 migrations/migrations.sql
 client/node_modules
 Log
-local.env
+
 .DS_Store

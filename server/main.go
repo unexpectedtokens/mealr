@@ -33,7 +33,7 @@ func applyMiddleware(h httprouter.Handle, m ...middlewareFunc) httprouter.Handle
 }
 
 //ALWAYS put in AuthorizeMiddleware last if you need the (user)id in the handler function. An option is to wrap the actual handler function with auth middleware before passing it to applyMiddleware
-func handleRequests() {
+func handleRequests(addr string) {
 	router := httprouter.New()
 
 	//RECIPE RELATED
@@ -48,7 +48,7 @@ func handleRequests() {
 	router.POST("/api/recipes/detail/:id/mi", applyMiddleware(routes.RecipeMiscIngredientCreate, middleware.AuthorizeMiddleware))
 	router.DELETE("/api/recipes/detail/:id/deletemi/:miid", applyMiddleware(routes.RecipeMiscIngredientDelete, middleware.AuthorizeMiddleware))
 	///METHOD RELATED
-	router.DELETE("/api/recipes/detail/:id/method/:stepid", applyMiddleware(routes.RecipeMethodStepDelete, middleware.AuthorizeMiddleware))
+	router.DELETE("/api/recipes/detail/:id/method/:stepNumberToDelete", applyMiddleware(routes.MethodStepDelete, middleware.AuthorizeMiddleware))
 	router.PATCH("/api/recipes/detail/:id/method/:stepid", applyMiddleware(routes.RecipeMethodStepUpdateView, middleware.AuthorizeMiddleware))
 	router.GET("/api/recipes/detail/:id/method/", applyMiddleware(routes.RecipeMethodDetail))
 	router.POST("/api/recipes/detail/:id/method/", applyMiddleware(routes.RecipeMethodStepCreate, middleware.AuthorizeMiddleware))
@@ -94,9 +94,9 @@ func handleRequests() {
 	//"Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization"
 	handler := cors.New(_cors).Handler(router)
 
-	fmt.Println("Setting op listening on port 8080")
+	fmt.Printf("Setting op listening on port %s", addr)
 
-	panic(http.ListenAndServe("localhost:8080", handler))
+	panic(http.ListenAndServe(addr, handler))
 }
 
 func serveSPA(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -105,7 +105,7 @@ func serveSPA(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 //HTTPServer starts the server to receive requests on the specified port
-func HTTPServer() {
+func HTTPServer(addr string) {
 	db.InitDB()
 	err := routes.PrepareStatements()
 	if err != nil {
@@ -114,5 +114,5 @@ func HTTPServer() {
 	fmt.Println("Succesfully prepared statements")
 	defer db.DBCon.Close()
 	go auth.TokenCleanup()
-	handleRequests()
+	handleRequests(addr)
 }
